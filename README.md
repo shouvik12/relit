@@ -16,7 +16,14 @@ Everything you need is in this repo, including a free game to play.
 
 1. **Get it:** `git clone https://github.com/shouvik12/relit.git`, or click **Code → Download ZIP** and unzip it.
 2. **Open `relit.html`** with a double-click. It runs straight from your disk: no install, no server, no account.
-3. **Click _Choose your game file_** and pick `game/freedoom1.wad`.
+3. **Click _Choose your game file_**, open the **`game`** folder inside `relit`, and pick **`freedoom1.wad`**.
+
+```
+relit/
+├── relit.html        ← 2. double-click this
+└── game/
+    └── freedoom1.wad ← 3. pick this
+```
 
 That's it. Your browser remembers the file, so next time it's one click.
 
