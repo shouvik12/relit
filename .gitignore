@@ -7,3 +7,4 @@ freedoom-*/
 *.WAD
 !game/freedoom1.wad
 dist/
+.DS_Store
