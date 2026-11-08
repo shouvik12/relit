@@ -4,9 +4,9 @@
 
 Relit keeps Doom's original engine running the game, every rule, monster and door exactly as it was, and replaces everything you *see* with a new real-time 3D renderer. Press **V** at any moment to flip between 1993 and now.
 
-![Same spot, same moment: the original 1993 view on the left, Relit on the right](docs/relit-1993-vs-2026.jpg)
+![Zoomed in on the same doorway: the original 1993 view on the left, Relit on the right](docs/relit-closeup.jpg)
 
-<p align="center"><sub>Same room, same moment. Left: the 1993 view. Right: Relit. One key flips between them.</sub></p>
+<p align="center"><sub>The same doorway, same moment, zoomed in. Left: the 1993 renderer. Right: Relit. One key flips between them.</sub></p>
 
 ---
 
