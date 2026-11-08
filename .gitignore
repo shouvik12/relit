@@ -1,0 +1,8 @@
+node_modules/
+*.wad
+*.zip
+freedoom-*/
+
+*.wad
+*.WAD
+!game/freedoom1.wad

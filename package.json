@@ -1,0 +1,18 @@
+{
+  "name": "relit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The 1993 Doom engine, relit for today: a new 3D renderer in one HTML file",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "libs": "esbuild tools/libs-entry.js --bundle --format=esm --minify --legal-comments=eof --outfile=vendor/libs.js",
+    "build": "node tools/make-single.mjs",
+    "engine": "sh engine-src/build.sh"
+  },
+  "devDependencies": {
+    "@bjorn3/browser_wasi_shim": "0.4.2",
+    "earcut": "3.0.1",
+    "esbuild": "0.24.0",
+    "three": "0.170.0"
+  }
+}

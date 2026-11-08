@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relit</title>
+<meta name="description" content="Relit: the original Doom engine running in your browser, re-rendered in real 3D with dynamic lighting, free mouselook and modern effects. Plays Freedoom, nothing to install.">
+<style>
+:root{
+  --bg:#0b0a0c; --ink:#efe6da; --muted:#a3988c; --accent:#ff6a2b; --accent-2:#ffb35c;
+  --panel:rgba(14,12,14,.72); --line:rgba(255,255,255,.12); --hurt:#ff4d3a; --ok:#9be37a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.45 "Trebuchet MS","Gill Sans",system-ui,sans-serif}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--accent-2);outline-offset:2px}
+#stage{position:fixed;inset:0;overflow:hidden;touch-action:none;background:#000;cursor:crosshair}
+#gl,#weapon,#fb{position:absolute;inset:0;width:100%;height:100%;display:block}
+#weapon{pointer-events:none}
+#fb{object-fit:contain;image-rendering:pixelated;background:#000;display:none}
+.view-fb #gl,.view-fb #weapon,.view-fb .hud,.view-fb .cross{display:none}
+.view-fb #fb{display:block}
+
+/* start screen */
+#start{position:fixed;inset:0;z-index:20;display:flex;overflow-y:auto;padding:24px 16px;
+  background:radial-gradient(ellipse at 50% 70%,#3a1408 0%,#140808 45%,#070607 100%)}
+#start[hidden]{display:none}
+.card{max-width:560px;text-align:center;margin:auto}
+@media (max-height:520px){
+  #start{padding:12px 16px}
+  h1{font-size:clamp(44px,14vh,72px)}
+  .lede,.keys{display:none}
+  .eyebrow{margin-bottom:4px}
+  .skills{margin:12px 0}
+  .skills span{padding:5px 10px;font-size:13px}
+}
+.eyebrow{letter-spacing:.24em;text-transform:uppercase;font-size:12px;color:var(--accent-2);margin:0 0 10px}
+.sub{font-family:Impact,"Arial Narrow Bold",sans-serif;font-size:clamp(18px,3.4vw,26px);color:#ffb35c;margin:6px 0 0;letter-spacing:.03em}
+h1{font-family:Impact,"Haettenschweiler","Arial Narrow Bold",sans-serif;font-weight:400;font-size:clamp(64px,16vw,150px);line-height:.92;margin:0;
+  letter-spacing:.01em;color:#ffd9b8;text-shadow:0 0 30px rgba(255,106,43,.55),0 4px 0 #5a1c08}
+.lede{color:#d9c9b8;margin:16px auto 22px;max-width:44ch}
+.skills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 20px}
+.skills label{cursor:pointer}
+.skills input{position:absolute;opacity:0}
+.skills span{display:block;padding:7px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:14px}
+.skills input:checked+span{border-color:var(--accent);color:var(--ink);background:rgba(255,106,43,.14)}
+.skills input:focus-visible+span{outline:3px solid var(--accent-2)}
+.play{background:var(--accent);color:#1a0a04;border:0;border-radius:999px;padding:14px 34px;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 8px 30px rgba(255,106,43,.35)}
+.play:hover{background:#ff8048}
+.play:disabled{opacity:.6;cursor:wait}
+.card a{color:var(--accent-2)}
+.actions{display:flex;flex-direction:column;align-items:center;gap:10px}
+#remembered{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:6px}
+#remembered[hidden]{display:none}
+#remembered:not([hidden]) + .play{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;font-size:15px;padding:10px 22px}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;padding:4px}
+.pickhelp{max-width:46ch;margin:4px auto 0}
+#start.drop .card{outline:2px dashed var(--accent);outline-offset:14px;border-radius:12px}
+.bar{width:min(340px,80vw);height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin:18px auto 6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.small{font-size:13px;color:var(--muted)}
+.keys{margin-top:22px;font-size:13px;color:var(--muted)}
+kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--ink)}
+.err{color:#ffb4a8}
+
+/* HUD */
+.hud{position:absolute;inset:0;pointer-events:none;font-family:Impact,"Arial Narrow Bold",sans-serif;letter-spacing:.02em}
+.stat{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));display:flex;gap:22px;align-items:flex-end;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.stat.left{left:24px}.stat.right{right:24px}
+.stat b{display:block;font-weight:400;font-size:46px;line-height:1}
+.stat small{display:block;font-family:"Trebuchet MS",system-ui,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65)}
+.stat .low b{color:var(--hurt)}
+.keyset{display:flex;gap:6px;margin-bottom:8px}
+.keyset i{width:12px;height:22px;border-radius:3px;opacity:.15;background:#fff}
+.keyset i.on{opacity:1}
+.keyset .b{background:#4f8cff}.keyset .y{background:#ffd23c}.keyset .r{background:#ff4040}
+.msg{position:absolute;top:18px;left:24px;font-family:"Trebuchet MS",system-ui,sans-serif;font-size:15px;color:#ffe9c9;text-shadow:0 1px 6px #000;transition:opacity .4s;max-width:60vw}
+.cross{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;pointer-events:none;opacity:.7}
+.cross::before,.cross::after{content:"";position:absolute;background:#fff;box-shadow:0 0 3px #000}
+.cross::before{left:8px;top:2px;width:2px;height:14px}.cross::after{top:8px;left:2px;height:2px;width:14px}
+.corner{position:absolute;top:14px;right:14px;z-index:5;display:flex;gap:8px;align-items:center}
+.pill{pointer-events:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;backdrop-filter:blur(6px)}
+.pill[aria-pressed="true"]{border-color:var(--accent);color:#fff}
+.fps{font:12px ui-monospace,Menlo,monospace;color:rgba(255,255,255,.55)}
+.aistat{font-size:12px;color:#ffd9b8;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;transition:opacity .8s}
+.aistat.off{opacity:0}
+@media (max-width:700px){.aistat{display:none}}
+.hint{position:absolute;left:50%;top:62%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;pointer-events:none;transition:opacity .3s}
+.hint.off{opacity:0}
+
+/* touch */
+.touch{display:none}
+#menuBtn,.thint{display:none}
+@media (pointer:coarse){
+  .touch{display:grid;position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:4;
+    grid-template-columns:62px 88px;grid-template-rows:62px 62px;gap:10px;align-items:stretch}
+  .touch button{border-radius:50%;border:1px solid var(--line);background:rgba(20,16,18,.55);color:var(--ink);font-size:13px;touch-action:none;user-select:none;-webkit-user-select:none}
+  .touch .fire{grid-column:2;grid-row:1/3;align-self:center;height:88px;background:rgba(200,60,20,.6);font-weight:700;font-size:15px}
+  .touch button.on{background:var(--accent);color:#1a0a04}
+  #menuBtn{display:inline-block}
+  .stat b{font-size:32px}
+  .stat{gap:14px}
+  .stat.left{left:max(16px,env(safe-area-inset-left))}
+  .stat.right{left:max(16px,env(safe-area-inset-left));right:auto;top:12px;bottom:auto;flex-direction:row-reverse;justify-content:flex-end}
+  .msg{top:64px;left:16px}
+  .hint{display:none}
+  .thint{display:block;position:absolute;left:50%;top:40%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:13px;pointer-events:none;transition:opacity .6s;white-space:nowrap}
+  .thint.off{opacity:0}
+}
+@media (prefers-reduced-motion:reduce){.bar i,.msg,.hint{transition:none}}
+</style>
+</head>
+<body>
+<div id="stage" aria-label="Game view">
+  <canvas id="gl"></canvas>
+  <canvas id="weapon"></canvas>
+  <canvas id="fb" width="640" height="400"></canvas>
+  <div class="cross" aria-hidden="true"></div>
+  <div class="hud" aria-live="off">
+    <div class="msg" id="msg"></div>
+    <div class="stat left">
+      <div id="hp"><small>Health</small><b>100</b></div>
+      <div id="ar"><small>Armor</small><b>0</b></div>
+    </div>
+    <div class="stat right">
+      <div><div class="keyset" aria-label="Keys"><i class="b" id="kb"></i><i class="y" id="ky"></i><i class="r" id="kr"></i></div></div>
+      <div id="am"><small>Ammo</small><b>50</b></div>
+    </div>
+    <div class="hint" id="hint">Click to aim with the mouse · <b>V</b> flips to the 1993 look</div>
+  </div>
+  <div class="corner">
+    <span class="aistat off" id="aistat"></span>
+    <span class="fps" id="fps"></span>
+    <button class="pill" id="menuBtn" data-k="27">Menu</button>
+    <button class="pill" id="torch" aria-pressed="true" title="Flashlight (L)">Flashlight</button>
+    <button class="pill" id="toggle" aria-pressed="false" title="Switch between the remastered and original renderer (V)">1993 view</button>
+  </div>
+  <div class="touch" aria-hidden="true">
+    <button data-k="use">Use</button>
+    <button class="fire" data-k="fire">Fire</button>
+    <button data-k="next">Weapon</button>
+  </div>
+  <div class="thint" id="thint">Drag left side to move · right side to look</div>
+</div>
+
+<div id="start">
+  <div class="card">
+    <p class="eyebrow">The original Doom engine · re-rendered</p>
+    <h1>Relit</h1>
+    <p class="sub">The 1993 Doom engine, relit for today</p>
+    <p class="lede">id Software's 1993 engine runs the game, unchanged. A new renderer draws it in real 3D, with art remastered by AI on your own GPU: free mouselook, a flashlight with real shadows, lights that move with every fireball, sparks, smoke and embers, and 3D sound with the original music.</p>
+    <div class="skills" role="radiogroup" aria-label="Difficulty">
+      <label><input type="radio" name="skill" value="1"><span>Please don't kill me</span></label>
+      <label><input type="radio" name="skill" value="2"><span>Will this hurt?</span></label>
+      <label><input type="radio" name="skill" value="3" checked><span>Bring on the pain</span></label>
+      <label><input type="radio" name="skill" value="4"><span>Extreme carnage</span></label>
+      <label><input type="radio" name="skill" value="5"><span>Insanity</span></label>
+    </div>
+    <div class="actions">
+      <div id="remembered" hidden>
+        <button class="play" id="again">Play with <span id="againName"></span></button>
+        <button class="link" id="forget" type="button">Forget this file</button>
+      </div>
+      <button class="play" id="pick">Choose your game file</button>
+      <input type="file" id="wadfile" accept=".wad,.WAD" hidden>
+      <p class="small pickhelp">Or drop a <b>.wad</b> file here. Don't have one? <a href="https://freedoom.github.io/download.html" target="_blank" rel="noopener">Download Freedoom free</a>, unzip it and pick <b>freedoom1.wad</b>. Your own <b>doom.wad</b> or <b>doom2.wad</b> works too. The file never leaves your computer.</p>
+    </div>
+    <div id="load" hidden><div class="bar"><i id="barfill"></i></div><p class="small" id="loadmsg">Loading…</p></div>
+    <p class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse to look · click or <kbd>Ctrl</kbd> fire · <kbd>Space</kbd> use · <kbd>1</kbd>–<kbd>7</kbd> weapons · <kbd>L</kbd> flashlight · <kbd>V</kbd> 1993 view · <kbd>Esc</kbd> menu</p>
+    <p class="small">Engine: <a href="https://github.com/ozkl/doomgeneric">doomgeneric</a>, from id Software's GPL source. Relit is free software under the GPL-2.0; its source comes with this file as relit-source.zip. Not affiliated with id Software, Bethesda or ZeniMax.</p>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
