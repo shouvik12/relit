@@ -1,6 +1,6 @@
 # Relit
 
-**The 1993 Doom engine, relit for today.**
+**A new renderer for the original Doom engine.**
 
 Relit keeps Doom's original engine running the game, every rule, monster and door exactly as it was, and replaces everything you *see* with a new real-time 3D renderer. Press **V** at any moment to flip between 1993 and now.
 
@@ -30,7 +30,7 @@ That's it. Your browser remembers the file, so next time it's one click.
 
 - **Real 3D, real light.** Rooms are rebuilt as true 3D geometry with dynamic lighting and shadows, instead of 1993's flat software-rendered columns.
 - **Sharper textures.** The original low-res art is upscaled by a small AI model that runs locally in your browser.
-- **Mouselook and a crosshair.** Aim up and down freely, like a modern shooter.
+- **Mouselook and a crosshair.** Look up and down freely. Shots still use Doom's original auto-aim, so the game plays fair to the original.
 - **A flashlight.** Press **L** and dark corners stop being safe for anything.
 - **Atmosphere.** Drifting dust and light effects give rooms depth.
 - **A clean modern HUD.** Health, armor and ammo, out of your way.
@@ -78,7 +78,7 @@ your .wad file ──► Doom engine (C, compiled to WebAssembly) ──► game
                      3D geometry · lighting · shadows · AI-upscaled textures
 ```
 
-The engine is the original Doom source (via [doomgeneric](https://github.com/ozkl/doomgeneric)) compiled to WebAssembly. Each frame, Relit reads the live game state, including map geometry, monsters, items and doors, and draws it in 3D. The engine never knows it's being drawn differently.
+The engine is the original Doom source (via [doomgeneric](https://github.com/ozkl/doomgeneric), with Chocolate Doom's OPL music code) compiled to WebAssembly. Each frame, Relit reads the live game state, including map geometry, monsters, items and doors, and draws it in 3D. The engine never knows it's being drawn differently.
 
 | File | What it is |
 |---|---|
@@ -95,10 +95,11 @@ The engine is the original Doom source (via [doomgeneric](https://github.com/ozk
 
 ```bash
 npm install
-node tools/make-single.mjs     # rebuilds relit.html
+npm run build              # writes dist/relit.html
+cp dist/relit.html .       # the copy players open
 ```
 
-To rebuild the engine itself, see `engine-src/build.sh` (needs [Emscripten](https://emscripten.org)).
+To rebuild the engine (`doom.wasm`), run `npm run engine`. It compiles with Zig: `pip install ziglang` first.
 
 ---
 
@@ -112,8 +113,9 @@ Played your own `doom2.wad` with it? Found a room that looks incredible with the
 
 - **Doom engine** © id Software, released under the GPL. Ported to the browser via [doomgeneric](https://github.com/ozkl/doomgeneric).
 - **Freedoom** by the [Freedoom project](https://freedoom.github.io), under a BSD licence (`game/FREEDOOM-LICENSE.txt`).
-- **Three.js** (MIT) and **Real-ESRGAN** (BSD-3-Clause). See `licenses/`.
-- Relit is released under the **GPL-2.0** (see `LICENSE`).
+- **OPL music emulation** from DOSBox and Chocolate Doom (GPL-2.0-or-later).
+- **Three.js** (MIT), **earcut** (ISC), **browser_wasi_shim** (MIT/Apache-2.0) and the **Real-ESRGAN** `realesr-general-x4v3` model weights (BSD-3-Clause). See `licenses/`.
+- Relit is released under the **GPL-2.0-or-later** (see `LICENSE`).
 
 Relit is a fan project and isn't affiliated with id Software, Bethesda or ZeniMax. *DOOM* is their trademark. The original game data is not included; bring your own copy to play it.
 

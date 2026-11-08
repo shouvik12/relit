@@ -6,3 +6,4 @@ freedoom-*/
 *.wad
 *.WAD
 !game/freedoom1.wad
+dist/
