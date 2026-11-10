@@ -376,7 +376,7 @@ function buildLevel(wad, assets, epi, map, scene, commercial) {
     sectorMeshes.push(tris ? makeFlatMeshes(tris, s, group) : null);
   }
 
-  return { V, sides, lines, nsec, sectorMeshes, group, wallMeshes: new Map(), lastKey: '' };
+  return { V, sides, lines, nsec, sectorMeshes, group, wallMeshes: new Map(), dynWallMeshes: new Map(), dynSec: new Set(), lastKey: '' };
 }
 
 function triangulateSector(edges, V) {
@@ -486,7 +486,12 @@ function makeFlatMeshes(tris, s, group) {
 
 // Walls depend on live sector heights and switch textures, so they are
 // rebuilt whenever any of those change, batched into one mesh per texture.
-function buildWalls(lv, assets, H, sideTex) {
+// Walls are built in two layers. Lines touching a sector that has ever moved (doors,
+// lifts, crushers, switches) go in the small "moving" layer, which is the only one
+// rebuilt while something moves; everything else is built once.
+function buildWalls(lv, assets, H, sideTex, layer) {
+  const meshes = layer === 'moving' ? lv.dynWallMeshes : lv.wallMeshes;
+  const dyn = lv.dynSec;
   const batches = new Map();
   const add = (tex, sector, x1, y1, x2, y2, zb, zt, u0, u1, vTop, h) => {
     if (zt - zb < 0.01) return;
@@ -509,6 +514,8 @@ function buildWalls(lv, assets, H, sideTex) {
   };
   const sky = assets.skyflat;
   for (const ln of lv.lines) {
+    const moving = (ln.front >= 0 && dyn.has(lv.sides[ln.front].sector)) || (ln.back >= 0 && dyn.has(lv.sides[ln.back].sector));
+    if (moving !== (layer === 'moving')) continue;
     for (const side of [0, 1]) {
       const si = side === 0 ? ln.front : ln.back; if (si < 0) continue;
       const oi = side === 0 ? ln.back : ln.front;
@@ -548,16 +555,16 @@ function buildWalls(lv, assets, H, sideTex) {
       }
     }
   }
-  for (const [tex, m] of lv.wallMeshes) if (!batches.has(tex)) { lv.group.remove(m); m.geometry.dispose(); lv.wallMeshes.delete(tex); }
+  for (const [tex, m] of meshes) if (!batches.has(tex)) { lv.group.remove(m); m.geometry.dispose(); meshes.delete(tex); }
   for (const [tex, b] of batches) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(b.pos, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2));
     g.setAttribute('normal', new THREE.Float32BufferAttribute(b.nrm, 3));
     g.setAttribute('aSector', new THREE.Float32BufferAttribute(b.sec, 1));
-    let m = lv.wallMeshes.get(tex);
+    let m = meshes.get(tex);
     if (m) { m.geometry.dispose(); m.geometry = g; }
-    else { m = new THREE.Mesh(g, assets.wallMaterial(tex).mat); m.castShadow = m.receiveShadow = true; m.userData = { kind: 'wall', tex: assets.textures[tex]?.name }; lv.wallMeshes.set(tex, m); lv.group.add(m); }
+    else { m = new THREE.Mesh(g, assets.wallMaterial(tex).mat); m.castShadow = m.receiveShadow = true; m.userData = { kind: 'wall', tex: assets.textures[tex]?.name }; meshes.set(tex, m); lv.group.add(m); }
   }
 }
 
@@ -967,11 +974,29 @@ export async function run(opts) {
     for (let s = 0; s < nsec; s++) sectorData[s] = lightCurve(H[s * 5 + 2]);
     sectorTex.needsUpdate = true;
 
-    // walls: rebuild only when heights or textures moved
-    let dirty = !lv.builtH || !lv.builtSides;
-    if (!dirty) { for (let i = 0; i < H.length; i++) if (i % 5 !== 2 && H[i] !== lv.builtH[i]) { dirty = true; break; } }
-    if (!dirty) { const sd = cur.sides; for (let i = 0; i < sd.length; i++) if (sd[i] !== lv.builtSides[i]) { dirty = true; break; } }
-    if (dirty) { buildWalls(lv, assets, H, cur.sides); lv.builtH = H; lv.builtSides = cur.sides; }
+    // walls: rebuild only when heights or textures moved, and then only the moving layer
+    // (a sector joins it the first time it moves, which rebuilds both layers once)
+    const first = !lv.builtH || !lv.builtSides;
+    let moved = false, grew = false;
+    if (!first) {
+      for (let i = 0; i < H.length; i++) {
+        if (i % 5 !== 2 && H[i] !== lv.builtH[i]) {
+          moved = true;
+          const s = (i / 5) | 0;
+          if (!lv.dynSec.has(s)) { lv.dynSec.add(s); grew = true; }
+        }
+      }
+      const sd = cur.sides;
+      for (let i = 0; i < sd.length; i++) {
+        if (sd[i] !== lv.builtSides[i]) {
+          moved = true;
+          const s = lv.sides[(i / 4) | 0].sector;
+          if (!lv.dynSec.has(s)) { lv.dynSec.add(s); grew = true; }
+        }
+      }
+    }
+    if (first || grew) buildWalls(lv, assets, H, cur.sides, 'still');
+    if (first || moved) { buildWalls(lv, assets, H, cur.sides, 'moving'); lv.builtH = H; lv.builtSides = cur.sides; }
 
     // floors and ceilings
     for (let s = 0; s < nsec; s++) {

@@ -74,6 +74,10 @@ That's it. Your browser remembers the file, so next time it's one click.
 
 Own the original games? Pick your `doom.wad` or `doom2.wad` and play id Software's original levels with Relit's new look. Your file stays on your machine.
 
+### Bonus level: Quake's Slipgate Complex
+
+Pick **Quake: The Slipgate Complex** on the start screen to play Quake's first level, rebuilt as a Doom map and fought with Doom's monsters and weapons. It's converted from the original Quake map source that John Romero released under the GPL in 2006, by `tools/quake2doom`. Doom levels can't stack rooms, so where Quake has a room above another, the floor on the walking route is kept. Details in [`maps/README.md`](maps/README.md). Works with Doom 1-style files such as `freedoom1.wad`.
+
 ---
 
 ## How it works
@@ -120,6 +124,7 @@ Played your own `doom2.wad` with it? Found a room that looks incredible with the
 
 - **Doom engine** © id Software, released under the GPL. Ported to the browser via [doomgeneric](https://github.com/ozkl/doomgeneric).
 - **Freedoom** by the [Freedoom project](https://freedoom.github.io), under a BSD licence (`game/FREEDOOM-LICENSE.txt`).
+- **Quake E1M1 map source** by id Software, released by John Romero under the GPL (2006); converted into `maps/slipgate.wad`. No Quake art or sound is included.
 - **OPL music emulation** from DOSBox and Chocolate Doom (GPL-2.0-or-later).
 - **Three.js** (MIT), **earcut** (ISC), **browser_wasi_shim** (MIT/Apache-2.0) and the **Real-ESRGAN** `realesr-general-x4v3` model weights (BSD-3-Clause). See `licenses/`.
 - Relit is released under the **GPL-2.0-or-later** (see `LICENSE`).

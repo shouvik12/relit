@@ -45,6 +45,8 @@ h1{font-family:Impact,"Haettenschweiler","Arial Narrow Bold",sans-serif;font-wei
 .skills span{display:block;padding:7px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:14px}
 .skills input:checked+span{border-color:var(--accent);color:var(--ink);background:rgba(255,106,43,.14)}
 .skills input:focus-visible+span{outline:3px solid var(--accent-2)}
+.levels{margin-top:-8px}
+.levelnote{margin:-10px auto 16px;max-width:520px}
 .play{background:var(--accent);color:#1a0a04;border:0;border-radius:999px;padding:14px 34px;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 8px 30px rgba(255,106,43,.35)}
 .play:hover{background:#ff8048}
 .play:disabled{opacity:.6;cursor:wait}
@@ -148,7 +150,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
     <p class="eyebrow">A new renderer for the original Doom engine</p>
     <h1>Relit</h1>
     <p class="sub">The 1993 Doom engine, relit for today</p>
-    <p class="lede">id Software's 1993 engine runs the game, unchanged. A new renderer draws it in real 3D, with art remastered by AI on your own GPU: free mouselook, a flashlight with real shadows, lights that move with every fireball, sparks, smoke and embers, and 3D sound with the original music.</p>
+    <p class="lede">id Software's 1993 engine runs the game, with its rules unchanged. A new renderer draws it in real 3D, with art remastered by AI on your own GPU: free mouselook, a flashlight with real shadows, lights that move with every fireball, sparks, smoke and embers, and 3D sound with the original music.</p>
     <div class="skills" role="radiogroup" aria-label="Difficulty">
       <label><input type="radio" name="skill" value="1"><span>Please don't kill me</span></label>
       <label><input type="radio" name="skill" value="2"><span>Will this hurt?</span></label>
@@ -156,6 +158,11 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
       <label><input type="radio" name="skill" value="4"><span>Extreme carnage</span></label>
       <label><input type="radio" name="skill" value="5"><span>Insanity</span></label>
     </div>
+    <div class="skills levels" role="radiogroup" aria-label="Level">
+      <label><input type="radio" name="level" value="campaign" checked><span>Freedoom campaign</span></label>
+      <label><input type="radio" name="level" value="slipgate"><span>Quake: The Slipgate Complex</span></label>
+    </div>
+    <p class="small levelnote" id="levelnote" hidden>Quake's first level, rebuilt as a Doom map from John Romero's GPL map source, with Doom's monsters, weapons and textures. Needs a Doom 1-style file such as <b>freedoom1.wad</b>.</p>
     <div class="actions">
       <div id="remembered" hidden>
         <button class="play" id="again">Play with <span id="againName"></span></button>

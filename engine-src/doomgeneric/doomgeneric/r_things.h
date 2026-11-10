@@ -22,7 +22,7 @@
 
 
 
-#define MAXVISSPRITES  	128
+#define MAXVISSPRITES  	1024 /* web port: was 128 */
 
 extern vissprite_t	vissprites[MAXVISSPRITES];
 extern vissprite_t*	vissprite_p;

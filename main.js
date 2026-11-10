@@ -56,6 +56,58 @@ async function engineBytes() {
   return new Uint8Array(await r.arrayBuffer());
 }
 
+// ---- bundled extra levels ----------------------------------------------
+// The Quake level ships as a PWAD (a Doom add-on file). Relit appends its lumps to
+// the player's game file in memory; the engine and the 3D renderer both use the last
+// copy of a lump name, so the bundled E1M1 replaces the game's own for this session.
+async function gunzip(bytes) {
+  const ds = new DecompressionStream('gzip');
+  const buf = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function slipgateBytes() {
+  if (window.RELIT_SLIPGATE) return gunzip(b64(window.RELIT_SLIPGATE));
+  const r = await fetch('maps/slipgate.wad');
+  if (!r.ok) throw new Error('Could not load the Quake level (maps/slipgate.wad)');
+  return new Uint8Array(await r.arrayBuffer());
+}
+function appendPwad(base, pwad) {
+  const bv = new DataView(base.buffer, base.byteOffset, base.byteLength);
+  const pv = new DataView(pwad.buffer, pwad.byteOffset, pwad.byteLength);
+  const bn = bv.getInt32(4, true), bdir = bv.getInt32(8, true);
+  const pn = pv.getInt32(4, true), pdir = pv.getInt32(8, true);
+  let dataLen = 0;
+  for (let i = 0; i < pn; i++) dataLen += pv.getInt32(pdir + i * 16 + 4, true);
+  const out = new Uint8Array(base.byteLength + dataLen + (bn + pn) * 16);
+  out.set(base, 0);
+  const ov = new DataView(out.buffer);
+  let at = base.byteLength;
+  const dirAt = base.byteLength + dataLen;
+  out.set(base.subarray(bdir, bdir + bn * 16), dirAt);
+  for (let i = 0; i < pn; i++) {
+    const e = pdir + i * 16, pos = pv.getInt32(e, true), size = pv.getInt32(e + 4, true);
+    out.set(pwad.subarray(pos, pos + size), at);
+    const d = dirAt + (bn + i) * 16;
+    ov.setInt32(d, size ? at : 0, true); ov.setInt32(d + 4, size, true);
+    out.set(pwad.subarray(e + 8, e + 16), d + 8);
+    at += size;
+  }
+  ov.setInt32(4, bn + pn, true); ov.setInt32(8, dirAt, true);
+  return out;
+}
+function hasLump(bytes, name) {
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const n = v.getInt32(4, true), dir = v.getInt32(8, true);
+  for (let i = 0; i < n; i++) {
+    let s = '';
+    for (let k = 0; k < 8; k++) { const c = bytes[dir + i * 16 + 8 + k]; if (!c) break; s += String.fromCharCode(c); }
+    if (s.toUpperCase() === name) return true;
+  }
+  return false;
+}
+const levelNote = () => { $('levelnote').hidden = document.querySelector('input[name=level]:checked').value !== 'slipgate'; };
+document.querySelectorAll('input[name=level]').forEach((r) => r.addEventListener('change', levelNote));
+
 function showError(msg) {
   $('load').hidden = false;
   $('barfill').style.width = '0';
@@ -69,7 +121,14 @@ async function start(name, wadBytes, remember) {
   started = true;
   $('pick').disabled = true; $('again').disabled = true; $('load').hidden = false;
   const skill = +document.querySelector('input[name=skill]:checked').value;
+  const level = document.querySelector('input[name=level]:checked').value;
+  const fileBytes = wadBytes;
   try {
+    if (level === 'slipgate') {
+      if (!hasLump(wadBytes, 'E1M1')) throw new Error('the Quake level needs a Doom 1-style file such as freedoom1.wad or doom.wad, not a Doom II one');
+      $('loadmsg').textContent = 'Opening the Slipgate…';
+      wadBytes = appendPwad(wadBytes, await slipgateBytes());
+    }
     const wasmBytes = await engineBytes();
     const ai = await aiBytes();
     await run({
@@ -103,7 +162,7 @@ async function start(name, wadBytes, remember) {
         if (msgAge > 3500) msgEl.style.opacity = 0;
       },
     });
-    if (remember) saveWad(name, wadBytes);
+    if (remember) saveWad(name, fileBytes);
     $('start').hidden = true;
     setTimeout(() => $('thint').classList.add('off'), 6000);
   } catch (err) {

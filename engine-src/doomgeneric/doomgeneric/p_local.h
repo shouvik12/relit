@@ -151,7 +151,7 @@ typedef struct
 
 // Extended MAXINTERCEPTS, to allow for intercepts overrun emulation.
 
-#define MAXINTERCEPTS_ORIGINAL 128
+#define MAXINTERCEPTS_ORIGINAL 4096 /* web port: was 128; also disables overrun emulation */
 #define MAXINTERCEPTS          (MAXINTERCEPTS_ORIGINAL + 61)
 
 extern intercept_t	intercepts[MAXINTERCEPTS];
@@ -216,8 +216,8 @@ extern	line_t*		ceilingline;
 // We keep the original limit, to detect what variables in memory were
 // overwritten (see SpechitOverrun())
 
-#define MAXSPECIALCROSS 		20
-#define MAXSPECIALCROSS_ORIGINAL	8
+#define MAXSPECIALCROSS 		256 /* web port: was 20 */
+#define MAXSPECIALCROSS_ORIGINAL	256 /* web port: was 8; disables overrun emulation */
 
 extern	line_t*	spechit[MAXSPECIALCROSS];
 extern	int	numspechit;

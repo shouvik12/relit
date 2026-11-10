@@ -8,3 +8,4 @@ freedoom-*/
 !game/freedoom1.wad
 dist/
 .DS_Store
+!maps/slipgate.wad
