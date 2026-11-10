@@ -8,6 +8,8 @@ Relit keeps Doom's original engine running the game, every rule, monster and doo
 
 <p align="center"><sub>The same doorway, same moment, zoomed in. Left: the 1993 renderer. Right: Relit. One key flips between them.</sub></p>
 
+> 🆕 **New: play Quake's first level, The Slipgate Complex, on Doom's 1993 engine.** [See the bonus level ↓](#bonus-level-quakes-slipgate-complex)
+
 ---
 
 ## Play in 30 seconds
@@ -71,12 +73,29 @@ That's it. Your browser remembers the file, so next time it's one click.
 | **Freedoom: Phase 2** (32 levels) | Free from [freedoom.github.io](https://freedoom.github.io/download.html) | ✅ Tested |
 | **Doom** (`doom.wad`) | Your own copy (Steam, GOG) | ✅ Tested |
 | **Doom II** (`doom2.wad`) | Your own copy (Steam, GOG) | ✅ Tested |
+| **Quake: The Slipgate Complex** (bonus level) | Built in; pick it on the start screen | ✅ Ready to play |
 
 Own the original games? Pick your `doom.wad` or `doom2.wad` and play id Software's original levels with Relit's new look. Your file stays on your machine.
 
 ### Bonus level: Quake's Slipgate Complex
 
-Pick **Quake: The Slipgate Complex** on the start screen to play Quake's first level, rebuilt as a Doom map and fought with Doom's monsters and weapons. It's converted from the original Quake map source that John Romero released under the GPL in 2006, by `tools/quake2doom`. Doom levels can't stack rooms, so where Quake has a room above another, the floor on the walking route is kept. Details in [`maps/README.md`](maps/README.md). Works with Doom 1-style files such as `freedoom1.wad`.
+![Fighting through Quake's Slipgate Complex in Relit](docs/quake-fight.gif)
+
+Quake's first level, rebuilt as a Doom map and played on Doom's original 1993 engine, with Doom's monsters, weapons and Freedoom's textures. Relit draws it with the same real-time lighting as every other level, so muzzle flashes and fireballs light up Quake's corridors.
+
+| | |
+|---|---|
+| ![A fight lighting up a Slipgate corridor](docs/quake-fight-corridor.jpg) | ![A fireball glowing over the water channel](docs/quake-fireball.jpg) |
+
+**How to play:** open `relit.html`, click **Quake: The Slipgate Complex** on the start screen, then pick `game/freedoom1.wad`. Walk into the slipgate at the end and the game carries on into Freedoom's level 2.
+
+**How it was made:**
+- It starts from the original Quake map source (`e1m1.map`) that John Romero released under the **GPL in 2006**. Only the layout and object placement are used; no Quake art or sound is included.
+- [`tools/quake2doom`](tools/quake2doom) converts Quake's 3D brushes into a Doom map: floors and ceilings, doors, lifts (including Quake's elevator), the exit, light levels from Quake's 190 lights, and monsters and items swapped for their Doom equivalents.
+- Doom levels can't stack rooms, so where Quake has a room above another, the floor on the walking route is kept. Ramps become small steps, and water and slime become shallow pools.
+- It runs at full speed: the same frame rate as Freedoom's own levels.
+
+Details in [`maps/README.md`](maps/README.md). Works with Doom 1-style files such as `freedoom1.wad`.
 
 ---
 
