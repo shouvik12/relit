@@ -167,6 +167,10 @@ def load_names(path):
 
 WALL_RULES = [
     (r'^SWITCH|^SW', 'SW1COMP'), (r'^\+\d?BUTN|^\+\dSW', 'SW1COMP'),
+    (r'^EXIT', 'EXITDOOR'),
+    # Quake's medieval set (episodes 1-4): swamp stone, metal trim, brick, rock, wood
+    (r'^WSWAMP', 'AROCK2'), (r'^WIZMET|^WMET', 'METAL1'), (r'^WBRICK', 'BRICK7'),
+    (r'^ROCK', 'ROCK3'), (r'^WIZWOOD|^WWOOD', 'WOOD9'), (r'^WGRND', 'BROWN144'), (r'^COP', 'MARBGRAY'),
     (r'DOOR', 'BIGDOOR2'), (r'^SLIP', 'SUPPORT2'), (r'LIGHT|LITE', 'LITE5'),
     (r'^COMP', 'COMPTALL'), (r'^CRATE', 'CRATE3'),
     (r'^TECH04_3', 'STARTAN3'), (r'^TECH04', 'STARTAN2'), (r'^TECH08', 'STARGR1'),
@@ -624,6 +628,14 @@ def convert(map_path, names_path, out_json, mapname='E1M1'):
                 ang = round(math.degrees(math.atan2(n[1], n[0]))) % 360
                 vfaces[(ang, round(d))].append((b, n, d, tex))
 
+    # edges with no matching brush face use the level's own most common wall texture
+    _wall_counts = defaultdict(int)
+    for _lst in vfaces.values():
+        for _b, _n, _d, _tex in _lst:
+            if wall_tex(_tex) not in ('METAL1', 'EXITDOOR', 'BIGDOOR2', 'LITE5', 'SW1COMP'):
+                _wall_counts[wall_tex(_tex)] += 1
+    fallback_tex = max(_wall_counts, key=_wall_counts.get) if _wall_counts else wall_tex(None)
+
     def tex_for_edge(p1, p2, outward_from_face):
         # find a brush face whose plane contains the edge, with normal pointing into the face
         mx, my = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
@@ -638,7 +650,7 @@ def convert(map_path, names_path, out_json, mapname='E1M1'):
                 for b, n, pd, tex in vfaces.get((a, dd), []):
                     if b.fp.buffer(1).contains(Point(mx - nx * 0.5, my - ny * 0.5)):
                         return wall_tex(tex)
-        return wall_tex(None)
+        return fallback_tex
 
     linedefs, sidedefs = [], []
 
