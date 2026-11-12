@@ -55,7 +55,7 @@
 #include <CoreFoundation/CFUserNotification.h>
 #endif
 
-#define DEFAULT_RAM 6 /* MiB */
+#define DEFAULT_RAM 64 /* MiB; Relit: room for big converted Quake maps */
 #define MIN_RAM     6  /* MiB */
 
 
