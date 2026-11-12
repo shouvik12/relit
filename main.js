@@ -140,6 +140,7 @@ async function start(name, wadBytes) {
       onLock: (on) => $('hint').classList.toggle('off', on),
       onMessage: (m) => { msgEl.textContent = m; msgEl.style.opacity = 1; },
       onCrash: (err, log) => { console.error(err, log); },
+      onQuit: () => location.reload(),  // back to the start screen
       status: (fps) => { $('fps').textContent = fps + ' fps'; },
       hud: (P, msgAge) => {
         const ammo = P[9] < 0 ? '–' : P[9] | 0;

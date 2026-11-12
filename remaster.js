@@ -944,7 +944,9 @@ export async function run(opts) {
   let lastAng = null, lastPitch = 0, swayX = 0, swayY = 0, kick = 0, lastFlash = false, lastDamage = 0, lastNow = performance.now();
   let fps = 0, frames = 0, fpsT = performance.now();
 
+  let quit = false;
   const frame = (now) => {
+    if (quit) return;
     requestAnimationFrame(frame);
     remaster?.pump();
     // feed input and step the engine when a tic is due
@@ -953,7 +955,11 @@ export async function run(opts) {
       eng.e.dgx_mouse(dx, mouseButtons); frame.lastButtons = mouseButtons;
     }
     let ran = false;
-    try { ran = eng.e.dgx_frame() === 1; } catch (err) { opts.onCrash(err, eng.log); throw err; }
+    try { ran = eng.e.dgx_frame() === 1; } catch (err) {
+      // Quit Game from Doom's menu ends the engine with exit code 0
+      if (err && err.code === 0 && /exit/.test(err.message)) { quit = true; opts.onQuit?.(); return; }
+      opts.onCrash(err, eng.log); throw err;
+    }
     if (ran || !cur) {
       prev = cur; cur = snapshot(); ticTime = now; pendingTurn = 0;
       if (cur.inLevel) ensureLevel(cur);
