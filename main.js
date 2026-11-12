@@ -179,6 +179,9 @@ const startEl = $('start');
 ['dragleave', 'drop'].forEach((n) => startEl.addEventListener(n, (e) => { e.preventDefault(); if (n === 'dragleave' && startEl.contains(e.relatedTarget)) return; startEl.classList.remove('drop'); }));
 startEl.addEventListener('drop', (e) => fromFile(e.dataTransfer.files[0]));
 
+// Exit: back to the start screen at any time, dead or alive
+$('exit').addEventListener('click', () => location.reload());
+
 // one-click play with the built-in Freedoom
 $('play').addEventListener('click', async () => {
   $('load').hidden = false; $('loadmsg').textContent = 'Loading Freedoom…';
