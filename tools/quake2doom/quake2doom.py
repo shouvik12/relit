@@ -790,13 +790,18 @@ def simplify(m, tol=0.75):
     V, L, S = m['vertexes'], m['linedefs'], m['sidedefs']
 
     def skey(i):
-        if i == 0xFFFF:
+        if i is None:
             return None
         s = S[i]
         return (s['sector'], s['upper'], s['lower'], s['mid'])
 
+    # a one-sided line (no two-sided flag) has no back side; 0xFFFF can also be a real
+    # side number here, since the unmerged level may have more than 65535 sides
+    def back(l):
+        return l['back'] if l['flags'] & 4 else None
+
     def lkey(l):
-        return (l['flags'], l['special'], l['tag'], skey(l['front']), skey(l['back']))
+        return (l['flags'], l['special'], l['tag'], skey(l['front']), skey(back(l)))
 
     alive = [True] * len(L)
     starts, ends = defaultdict(set), defaultdict(set)
@@ -835,15 +840,15 @@ def simplify(m, tol=0.75):
             usedV[v] = len(usedV)
         return usedV[v]
     def remap_s(s):
-        if s == 0xFFFF:
-            return s
+        if s is None:
+            return 0xFFFF
         if s not in usedS:
             usedS[s] = len(usedS)
         return usedS[s]
     for i, l in enumerate(L):
         if alive[i]:
             nl = dict(l); nl['v1'] = remap_v(l['v1']); nl['v2'] = remap_v(l['v2'])
-            nl['front'] = remap_s(l['front']); nl['back'] = remap_s(l['back'])
+            nl['front'] = remap_s(l['front']); nl['back'] = remap_s(back(l))
             newL.append(nl)
     newV = [None] * len(usedV)
     for old, new in usedV.items():
