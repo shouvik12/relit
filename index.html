@@ -55,9 +55,6 @@ h1{font-family:Impact,"Haettenschweiler","Arial Narrow Bold",sans-serif;font-wei
 .play:disabled{opacity:.6;cursor:wait}
 .card a{color:var(--accent-2)}
 .actions{display:flex;flex-direction:column;align-items:center;gap:10px}
-#remembered{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:6px}
-#remembered[hidden]{display:none}
-#remembered:not([hidden]) + .play{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none;font-size:15px;padding:10px 22px}
 .link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;padding:4px}
 .pickhelp{max-width:46ch;margin:4px auto 0}
 #start.drop .card{outline:2px dashed var(--accent);outline-offset:14px;border-radius:12px}
@@ -171,15 +168,11 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
       <label><input type="radio" name="qmap" value="3"><span>3 · The Necropolis</span></label>
       <label><input type="radio" name="qmap" value="4"><span>4 · The Grisly Grotto</span></label>
     </div>
-    <p class="small levelnote" id="levelnote" hidden>The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto, rebuilt as Doom maps from John Romero's GPL map source, with Doom's monsters, weapons and textures. Needs a Doom 1-style file such as <b>freedoom1.wad</b>.</p>
+    <p class="small levelnote" id="levelnote" hidden>The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto, rebuilt as Doom maps from John Romero's GPL map source, with Doom's monsters, weapons and textures. </p>
     <div class="actions">
-      <div id="remembered" hidden>
-        <button class="play" id="again">Play with <span id="againName"></span></button>
-        <button class="link" id="forget" type="button">Forget this file</button>
-      </div>
-      <button class="play" id="pick">Choose your game file</button>
+      <button class="play" id="play">Play</button>
       <input type="file" id="wadfile" accept=".wad,.WAD" hidden>
-      <p class="small pickhelp">Or drop a <b>.wad</b> file here. Got Relit from GitHub? Pick <b>game/freedoom1.wad</b>. Otherwise <a href="https://freedoom.github.io/download.html" target="_blank" rel="noopener">download Freedoom free</a>, unzip it and pick <b>freedoom1.wad</b>. Your own <b>doom.wad</b> or <b>doom2.wad</b> works too. The file never leaves your computer.</p>
+      <p class="small pickhelp">Plays <a href="https://freedoom.github.io" target="_blank" rel="noopener">Freedoom</a>, built in. Own the original? <button class="link" id="pick" type="button">Use your own doom.wad</button> or drop it here. It never leaves your computer.</p>
     </div>
     <div id="load" hidden><div class="bar"><i id="barfill"></i></div><p class="small" id="loadmsg">Loading…</p></div>
     <p class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse to look · click or <kbd>Ctrl</kbd> fire · <kbd>Space</kbd> use · <kbd>1</kbd>–<kbd>7</kbd> weapons · <kbd>L</kbd> flashlight · <kbd>V</kbd> 1993 view · <kbd>Esc</kbd> menu</p>

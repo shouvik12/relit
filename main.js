@@ -7,33 +7,6 @@ const stage = $('stage');
 const hpEl = $('hp'), arEl = $('ar'), amEl = $('am'), msgEl = $('msg');
 let lastHud = '', started = false;
 
-// The game file stays in this browser: remembered in IndexedDB so the next
-// visit is one click. Nothing is uploaded anywhere.
-const DB = 'relit', STORE = 'files';
-function idb() {
-  return new Promise((resolve, reject) => {
-    const r = indexedDB.open(DB, 1);
-    r.onupgradeneeded = () => r.result.createObjectStore(STORE);
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-  });
-}
-async function saveWad(name, bytes) {
-  try {
-    const db = await idb();
-    await new Promise((res, rej) => { const tx = db.transaction(STORE, 'readwrite'); tx.objectStore(STORE).put({ name, bytes }, 'wad'); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-  } catch { /* private mode or storage full: just ask again next time */ }
-}
-async function loadWad() {
-  try {
-    const db = await idb();
-    return await new Promise((res) => { const r = db.transaction(STORE).objectStore(STORE).get('wad'); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); });
-  } catch { return null; }
-}
-async function forgetWad() {
-  try { const db = await idb(); db.transaction(STORE, 'readwrite').objectStore(STORE).delete('wad'); } catch { /* nothing to forget */ }
-}
-
 function b64(str) {
   const bin = atob(str), out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -43,6 +16,15 @@ async function aiBytes() {
   if (/[?&]noai\b/.test(location.search)) return null; // ?noai turns the AI remaster off
   if (window.RELIT_AI) return b64(window.RELIT_AI);
   try { const r = await fetch('relit-ai.bin'); return r.ok ? new Uint8Array(await r.arrayBuffer()) : null; } catch { return null; }
+}
+
+// Freedoom (BSD) ships with Relit, so every mode starts with one click.
+async function freedoomBytes() {
+  if (window.RELIT_FREEDOOM) return gunzip(b64(window.RELIT_FREEDOOM));
+  for (const f of ['game/freedoom1.wad', '../game/freedoom1.wad']) {
+    try { const r = await fetch(f); if (r.ok) return new Uint8Array(await r.arrayBuffer()); } catch { /* try the next */ }
+  }
+  throw new Error('Could not load the built-in Freedoom (game/freedoom1.wad)');
 }
 
 async function engineBytes() {
@@ -120,16 +102,15 @@ function showError(msg) {
   $('barfill').style.width = '0';
   $('loadmsg').innerHTML = '';
   const s = document.createElement('span'); s.className = 'err'; s.textContent = msg; $('loadmsg').append(s);
-  $('pick').disabled = false; $('again').disabled = false;
+  $('pick').disabled = false; $('play').disabled = false;
 }
 
-async function start(name, wadBytes, remember) {
+async function start(name, wadBytes) {
   if (started) return;
   started = true;
-  $('pick').disabled = true; $('again').disabled = true; $('load').hidden = false;
+  $('pick').disabled = true; $('play').disabled = true; $('load').hidden = false;
   const skill = +document.querySelector('input[name=skill]:checked').value;
   const level = document.querySelector('input[name=level]:checked').value;
-  const fileBytes = wadBytes;
   let map = 1;
   try {
     if (level === 'slipgate') {
@@ -173,7 +154,6 @@ async function start(name, wadBytes, remember) {
         if (msgAge > 3500) msgEl.style.opacity = 0;
       },
     });
-    if (remember) saveWad(name, fileBytes);
     $('start').hidden = true;
     setTimeout(() => $('thint').classList.add('off'), 6000);
   } catch (err) {
@@ -186,7 +166,7 @@ async function fromFile(file) {
   if (!file) return;
   if (!/\.wad$/i.test(file.name)) { showError('Pick a .wad file, for example freedoom1.wad.'); return; }
   $('load').hidden = false; $('loadmsg').textContent = 'Reading ' + file.name + '…';
-  start(file.name, new Uint8Array(await file.arrayBuffer()), true);
+  start(file.name, new Uint8Array(await file.arrayBuffer()));
 }
 
 $('pick').addEventListener('click', () => $('wadfile').click());
@@ -198,11 +178,8 @@ const startEl = $('start');
 ['dragleave', 'drop'].forEach((n) => startEl.addEventListener(n, (e) => { e.preventDefault(); if (n === 'dragleave' && startEl.contains(e.relatedTarget)) return; startEl.classList.remove('drop'); }));
 startEl.addEventListener('drop', (e) => fromFile(e.dataTransfer.files[0]));
 
-// returning player: offer the remembered file
-loadWad().then((saved) => {
-  if (!saved || !saved.bytes) return;
-  $('againName').textContent = saved.name;
-  $('remembered').hidden = false;
-  $('again').addEventListener('click', () => start(saved.name, saved.bytes, false));
-  $('forget').addEventListener('click', () => { forgetWad(); $('remembered').hidden = true; });
+// one-click play with the built-in Freedoom
+$('play').addEventListener('click', async () => {
+  $('load').hidden = false; $('loadmsg').textContent = 'Loading Freedoom…';
+  try { start('freedoom1.wad', await freedoomBytes()); } catch (err) { showError(err.message + '.'); }
 });
