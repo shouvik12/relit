@@ -57,9 +57,10 @@ async function engineBytes() {
 }
 
 // ---- bundled extra levels ----------------------------------------------
-// The Quake level ships as a PWAD (a Doom add-on file). Relit appends its lumps to
+// The Quake levels ship as a PWAD (a Doom add-on file). Relit appends its lumps to
 // the player's game file in memory; the engine and the 3D renderer both use the last
-// copy of a lump name, so the bundled E1M1 replaces the game's own for this session.
+// copy of a lump name, so the bundled E1M1-E1M4 replace the game's own for this session,
+// and finishing one Quake level leads straight into the next.
 async function gunzip(bytes) {
   const ds = new DecompressionStream('gzip');
   const buf = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
@@ -67,9 +68,12 @@ async function gunzip(bytes) {
 }
 async function slipgateBytes() {
   if (window.RELIT_SLIPGATE) return gunzip(b64(window.RELIT_SLIPGATE));
-  const r = await fetch('maps/slipgate.wad');
-  if (!r.ok) throw new Error('Could not load the Quake level (maps/slipgate.wad)');
-  return new Uint8Array(await r.arrayBuffer());
+  // the whole of episode 1 when it's there, otherwise just the Slipgate
+  for (const f of ['maps/quake-e1.wad', 'maps/slipgate.wad']) {
+    const r = await fetch(f);
+    if (r.ok) return new Uint8Array(await r.arrayBuffer());
+  }
+  throw new Error('Could not load the Quake levels (maps/quake-e1.wad)');
 }
 function appendPwad(base, pwad) {
   const bv = new DataView(base.buffer, base.byteOffset, base.byteLength);

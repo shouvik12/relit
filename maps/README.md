@@ -17,3 +17,20 @@ Grunts become a mix of Freedoom zombies, shotgun guys and imps; dogs become demo
 Rebuild:
     python3 tools/quake2doom/quake2doom.py e1m1.map tools/quake2doom/freedoom1_textures.json slipgate E1M1
     zdbsp -R -o maps/slipgate.wad slipgate.raw.wad
+
+## quake-e1.wad: Quake episode 1, E1M1 to E1M4, as Doom levels
+
+The Slipgate Complex, Castle of the Damned, The Necropolis and The Grisly Grotto, from the
+same GPL map source release, converted the same way. Finishing one level leads into the
+next; after the Grisly Grotto the game carries on into the player's own E1M5.
+
+E1M3 and E1M4 are big: after conversion they have more than 32767 sidedefs, which vanilla
+Doom can't index. Relit's engine reads map indices as unsigned 16-bit numbers (as Boom-style
+ports do), so it handles up to 65535. The converter also merges collinear wall pieces first.
+
+Rebuild (the converter needs `pip install numpy shapely`):
+    for m in 1 2 3 4; do
+      python3 tools/quake2doom/quake2doom.py e1m$m.map tools/quake2doom/freedoom1_textures.json e1m$m E1M$m
+      zdbsp -R -o e1m$m.wad e1m$m.raw.wad
+    done
+    python3 tools/quake2doom/pack.py maps/quake-e1.wad e1m1.wad e1m2.wad e1m3.wad e1m4.wad

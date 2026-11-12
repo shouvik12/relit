@@ -483,11 +483,11 @@ P_BlockLinesIterator
     
     offset = y*bmapwidth+x;
 	
-    offset = *(blockmap+offset);
+    offset = (unsigned short)*(blockmap+offset);  // Relit: unsigned, for big maps
 
     for ( list = blockmaplump+offset ; *list != -1 ; list++)
     {
-	ld = &lines[*list];
+	ld = &lines[(unsigned short)*list];
 
 	if (ld->validcount == validcount)
 	    continue; 	// line has already been checked

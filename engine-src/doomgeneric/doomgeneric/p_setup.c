@@ -189,12 +189,12 @@ void P_LoadSegs (int lump)
     li = segs;
     for (i=0 ; i<numsegs ; i++, li++, ml++)
     {
-	li->v1 = &vertexes[SHORT(ml->v1)];
-	li->v2 = &vertexes[SHORT(ml->v2)];
+	li->v1 = &vertexes[(unsigned short)SHORT(ml->v1)];
+	li->v2 = &vertexes[(unsigned short)SHORT(ml->v2)];
 
 	li->angle = (SHORT(ml->angle))<<16;
 	li->offset = (SHORT(ml->offset))<<16;
-	linedef = SHORT(ml->linedef);
+	linedef = (unsigned short)SHORT(ml->linedef);
 	ldef = &lines[linedef];
 	li->linedef = ldef;
 	side = SHORT(ml->side);
@@ -250,8 +250,8 @@ void P_LoadSubsectors (int lump)
     
     for (i=0 ; i<numsubsectors ; i++, ss++, ms++)
     {
-	ss->numlines = SHORT(ms->numsegs);
-	ss->firstline = SHORT(ms->firstseg);
+	ss->numlines = (unsigned short)SHORT(ms->numsegs);
+	ss->firstline = (unsigned short)SHORT(ms->firstseg);
     }
 	
     W_ReleaseLumpNum(lump);
@@ -410,8 +410,8 @@ void P_LoadLineDefs (int lump)
 	ld->flags = SHORT(mld->flags);
 	ld->special = SHORT(mld->special);
 	ld->tag = SHORT(mld->tag);
-	v1 = ld->v1 = &vertexes[SHORT(mld->v1)];
-	v2 = ld->v2 = &vertexes[SHORT(mld->v2)];
+	v1 = ld->v1 = &vertexes[(unsigned short)SHORT(mld->v1)];
+	v2 = ld->v2 = &vertexes[(unsigned short)SHORT(mld->v2)];
 	ld->dx = v2->x - v1->x;
 	ld->dy = v2->y - v1->y;
 	
@@ -449,8 +449,11 @@ void P_LoadLineDefs (int lump)
 	    ld->bbox[BOXTOP] = v1->y;
 	}
 
-	ld->sidenum[0] = SHORT(mld->sidenum[0]);
-	ld->sidenum[1] = SHORT(mld->sidenum[1]);
+	// Relit: sidedef numbers are unsigned 16-bit; 0xFFFF still means "no side"
+	ld->sidenum[0] = (unsigned short)SHORT(mld->sidenum[0]);
+	ld->sidenum[1] = (unsigned short)SHORT(mld->sidenum[1]);
+	if (ld->sidenum[0] == 0xFFFF) ld->sidenum[0] = -1;
+	if (ld->sidenum[1] == 0xFFFF) ld->sidenum[1] = -1;
 
 	if (ld->sidenum[0] != -1)
 	    ld->frontsector = sides[ld->sidenum[0]].sector;
@@ -491,7 +494,7 @@ void P_LoadSideDefs (int lump)
 	sd->toptexture = R_TextureNumForName(msd->toptexture);
 	sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
 	sd->midtexture = R_TextureNumForName(msd->midtexture);
-	sd->sector = &sectors[SHORT(msd->sector)];
+	sd->sector = &sectors[(unsigned short)SHORT(msd->sector)];
     }
 
     W_ReleaseLumpNum(lump);

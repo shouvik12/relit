@@ -189,7 +189,7 @@ typedef struct line_s
 
     // Visual appearance: SideDefs.
     //  sidenum[1] will be -1 if one sided
-    short	sidenum[2];			
+    int		sidenum[2];  // Relit: int, so maps can use up to 65535 sidedefs			
 
     // Neat. Another bounding box, for the extent
     //  of the LineDef.
@@ -223,8 +223,8 @@ typedef struct line_s
 typedef struct subsector_s
 {
     sector_t*	sector;
-    short	numlines;
-    short	firstline;
+    int		numlines;   // Relit: unsigned 16-bit in the WAD
+    int		firstline;
     
 } subsector_t;
 

@@ -767,6 +767,88 @@ def convert(map_path, names_path, out_json, mapname='E1M1'):
     return out
 
 
+# ---------------------------------------------------------------- simplification
+def simplify(m, tol=0.75):
+    """Merge chains of collinear linedefs that have identical sides and specials.
+
+    The planar overlay cuts long walls into many short pieces wherever another brush
+    outline touches them. Vanilla Doom indexes vertexes and sidedefs with signed 16-bit
+    numbers (max 32767), so big Quake levels only fit once those pieces are joined.
+    """
+    V, L, S = m['vertexes'], m['linedefs'], m['sidedefs']
+
+    def skey(i):
+        if i == 0xFFFF:
+            return None
+        s = S[i]
+        return (s['sector'], s['upper'], s['lower'], s['mid'])
+
+    def lkey(l):
+        return (l['flags'], l['special'], l['tag'], skey(l['front']), skey(l['back']))
+
+    alive = [True] * len(L)
+    starts, ends = defaultdict(set), defaultdict(set)
+    for i, l in enumerate(L):
+        starts[l['v1']].add(i); ends[l['v2']].add(i)
+
+    def off_line(a, b, c):
+        (ax, ay), (bx, by), (cx, cy) = V[a], V[b], V[c]
+        Ln = math.hypot(cx - ax, cy - ay)
+        if Ln < 1e-9:
+            return 1e9
+        return abs((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / Ln
+
+    merged = 0
+    changed = True
+    while changed:
+        changed = False
+        for v in range(len(V)):
+            if len(starts[v]) != 1 or len(ends[v]) != 1:
+                continue
+            (i,), (j,) = ends[v], starts[v]  # L[i]: a -> v, L[j]: v -> c
+            if i == j or not (alive[i] and alive[j]):
+                continue
+            a, c = L[i]['v1'], L[j]['v2']
+            if a == c or lkey(L[i]) != lkey(L[j]) or off_line(a, v, c) > tol:
+                continue
+            # join: L[i] becomes a -> c, L[j] goes away
+            ends[v].discard(i); starts[v].discard(j); ends[c].discard(j); ends[c].add(i)
+            L[i]['v2'] = c; alive[j] = False
+            merged += 1; changed = True
+
+    # rebuild compact arrays
+    newL, usedV, usedS = [], {}, {}
+    def remap_v(v):
+        if v not in usedV:
+            usedV[v] = len(usedV)
+        return usedV[v]
+    def remap_s(s):
+        if s == 0xFFFF:
+            return s
+        if s not in usedS:
+            usedS[s] = len(usedS)
+        return usedS[s]
+    for i, l in enumerate(L):
+        if alive[i]:
+            nl = dict(l); nl['v1'] = remap_v(l['v1']); nl['v2'] = remap_v(l['v2'])
+            nl['front'] = remap_s(l['front']); nl['back'] = remap_s(l['back'])
+            newL.append(nl)
+    newV = [None] * len(usedV)
+    for old, new in usedV.items():
+        newV[new] = V[old]
+    newS = [None] * len(usedS)
+    for old, new in usedS.items():
+        newS[new] = S[old]
+    m['vertexes'], m['linedefs'], m['sidedefs'] = newV, newL, newS
+    print(f'simplified: merged {merged} pieces -> verts {len(newV)} lines {len(newL)} sides {len(newS)}', file=sys.stderr)
+    for what, n in (('vertexes', len(newV)), ('sidedefs', len(newS)), ('linedefs', len(newL)), ('sectors', len(m['sectors']))):
+        if n > 65535:
+            raise SystemExit(f'{n} {what}: over the 65535 limit, even for Relit')
+        if n > 32767:
+            print(f'note: {n} {what} needs Relit\'s engine (unsigned indices); vanilla Doom stops at 32767', file=sys.stderr)
+    return m
+
+
 # ---------------------------------------------------------------- WAD writing
 def write_wad(m, path):
     def s8(s):
@@ -789,4 +871,4 @@ def write_wad(m, path):
 
 if __name__ == '__main__':
     m = convert(sys.argv[1], sys.argv[2], sys.argv[3] + '.json', sys.argv[4] if len(sys.argv) > 4 else 'E1M1')
-    write_wad(m, sys.argv[3] + '.raw.wad')
+    write_wad(simplify(m), sys.argv[3] + '.raw.wad')

@@ -15,7 +15,8 @@ const out = await build({
 const js = out.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 const wasm = fs.readFileSync(path.join(root, 'doom.wasm')).toString('base64');
 const ai = fs.readFileSync(path.join(root, 'relit-ai.bin')).toString('base64');
-const slipgate = zlib.gzipSync(fs.readFileSync(path.join(root, 'maps', 'slipgate.wad')), { level: 9 }).toString('base64');
+const quakeFile = ['quake-e1.wad', 'slipgate.wad'].map((f) => path.join(root, 'maps', f)).find((f) => fs.existsSync(f));
+const slipgate = zlib.gzipSync(fs.readFileSync(quakeFile), { level: 9 }).toString('base64');
 let html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const tag = '<script type="module" src="main.js"></script>';
 if (!html.includes(tag)) throw new Error('script tag not found in index.html');
