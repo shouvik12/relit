@@ -18,16 +18,14 @@ Everything you need is in this repo, including a free game to play.
 
 1. **Get it:** `git clone https://github.com/shouvik12/relit.git`, or click **Code → Download ZIP** and unzip it.
 2. **Open `relit.html`** with a double-click. It runs straight from your disk: no install, no server, no account.
-3. **Click _Choose your game file_**, open the **`game`** folder inside `relit`, and pick **`freedoom1.wad`**.
+3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign** or **Quake: Episode 1** (then a level, 1 to 4). Freedoom is built in, so there's no file to find.
 
 ```
 relit/
-├── relit.html        ← 2. double-click this
-└── game/
-    └── freedoom1.wad ← 3. pick this
+└── relit.html        ← double-click this, then press Play
 ```
 
-That's it. Your browser remembers the file, so next time it's one click.
+Own the original Doom? Click **Use your own doom.wad** on the start screen, or drop the file onto the page.
 
 > Works best in desktop **Chrome** or **Edge**. Nothing is uploaded anywhere; the game runs entirely on your computer.
 
