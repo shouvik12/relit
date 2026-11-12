@@ -95,10 +95,10 @@ The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto
 **How to play:** open `relit.html`, click **Quake: Episode 1**, pick a level (1 to 4) and press **Play**. Freedoom is built in, so there's no file to choose. Finishing a level leads into the next. Classic cheats work too: `IDDQD`, `IDKFA`, `IDCLEV12`.
 
 **How it was made:**
-- It starts from the original Quake map source (`e1m1.map`) that John Romero released under the **GPL in 2006**. Only the layout and object placement are used; no Quake art or sound is included.
+- It starts from the original Quake map sources (`e1m1.map` to `e1m4.map`) that John Romero released under the **GPL in 2006**. Only the layout and object placement are used; no Quake art or sound is included.
 - [`tools/quake2doom`](tools/quake2doom) converts Quake's 3D brushes into a Doom map: floors and ceilings, doors, lifts (including Quake's elevator), the exit, light levels from Quake's 190 lights, and monsters and items swapped for their Doom equivalents.
 - Doom levels can't stack rooms, so where Quake has a room above another, the floor on the walking route is kept. Ramps become small steps, and water and slime become shallow pools.
-- It runs at full speed: the same frame rate as Freedoom's own levels.
+- The Necropolis and the Grisly Grotto are far bigger than any 1993 map, so Relit's engine reads map data as unsigned 16-bit numbers (as Boom-style ports do) and gives each level a 64 MB memory pool. The Slipgate runs at Freedoom's frame rate; the two big maps are heavier.
 
 Details in [`maps/README.md`](maps/README.md). Works with Doom 1-style files such as `freedoom1.wad`.
 
@@ -121,7 +121,7 @@ The engine is the original Doom source (via [doomgeneric](https://github.com/ozk
 | `remaster.js` | The 3D renderer |
 | `effects.js`, `ai.js`, `relit-ai.bin` | Light effects, and the in-browser texture upscaler |
 | `audio.js` | Sound and music |
-| `main.js`, `index.html` | Start screen, file picker, HUD |
+| `main.js`, `index.html` | Start screen, level picker, HUD |
 | `doom.wasm`, `engine-src/` | The Doom engine, compiled and as source |
 | `tools/` | Build scripts, including `make-single.mjs`, which packs everything into `relit.html` |
 | `game/` | Freedoom: Phase 1, with its licence |
@@ -148,7 +148,7 @@ Played your own `doom2.wad` with it? Found a room that looks incredible with the
 
 - **Doom engine** © id Software, released under the GPL. Ported to the browser via [doomgeneric](https://github.com/ozkl/doomgeneric).
 - **Freedoom** by the [Freedoom project](https://freedoom.github.io), under a BSD licence (`game/FREEDOOM-LICENSE.txt`).
-- **Quake E1M1 map source** by id Software, released by John Romero under the GPL (2006); converted into `maps/slipgate.wad`. No Quake art or sound is included.
+- **Quake E1M1–E1M4 map sources** by id Software, released by John Romero under the GPL (2006); converted into `maps/quake-e1.wad`. No Quake art or sound is included.
 - **OPL music emulation** from DOSBox and Chocolate Doom (GPL-2.0-or-later).
 - **Three.js** (MIT), **earcut** (ISC), **browser_wasi_shim** (MIT/Apache-2.0) and the **Real-ESRGAN** `realesr-general-x4v3` model weights (BSD-3-Clause). See `licenses/`.
 - Relit is released under the **GPL-2.0-or-later** (see `LICENSE`).
