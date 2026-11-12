@@ -824,6 +824,9 @@ export async function run(opts) {
     ev.preventDefault();
     if (down) { if (held.has(k)) return; held.add(k); } else held.delete(k);
     keyEvent(down, k);
+    // Letters used for movement (W A S D E F) also go to the engine as themselves,
+    // so cheat codes like IDDQD and IDKFA can be typed. Unbound letters do nothing in play.
+    if (/^Key[A-Z]$/.test(ev.code) && k !== ev.code.slice(3).toLowerCase().charCodeAt(0)) keyEvent(down, ev.code.slice(3).toLowerCase().charCodeAt(0));
   };
   addEventListener('keydown', onKey(true));
   addEventListener('keyup', onKey(false));
