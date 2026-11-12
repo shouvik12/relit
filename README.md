@@ -87,6 +87,13 @@ The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto
 |---|---|
 | ![A fight lighting up a Slipgate corridor](docs/quake-fight-corridor.jpg) | ![A fireball glowing over the water channel](docs/quake-fireball.jpg) |
 
+**The four levels:**
+
+| | |
+|---|---|
+| ![E1M1, The Slipgate Complex](docs/quake-e1m1-slipgate.jpg)<br>**1 · The Slipgate Complex** | ![E1M2, Castle of the Damned](docs/quake-e1m2-castle.jpg)<br>**2 · Castle of the Damned** |
+| ![E1M3, The Necropolis](docs/quake-e1m3-necropolis.jpg)<br>**3 · The Necropolis** | ![E1M4, The Grisly Grotto](docs/quake-e1m4-grotto.jpg)<br>**4 · The Grisly Grotto** |
+
 **How to play:** open `relit.html`, click **Quake: Episode 1**, pick a level (1 to 4) and press **Play**. Freedoom is built in, so there's no file to choose. Finishing a level leads into the next. Classic cheats work too: `IDDQD`, `IDKFA`, `IDCLEV12`.
 
 **How it was made:**
