@@ -9,3 +9,4 @@ freedoom-*/
 dist/
 .DS_Store
 !maps/slipgate.wad
+!maps/quake-e1.wad
