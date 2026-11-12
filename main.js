@@ -81,6 +81,30 @@ function appendPwad(base, pwad) {
   ov.setInt32(4, bn + pn, true); ov.setInt32(8, dirAt, true);
   return out;
 }
+// A tiny PWAD that reuses one lump's data under other names: the Quake levels all
+// play the campaign's opening track (D_E1M1), which suits short videos.
+function lumpData(bytes, name) {
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const n = v.getInt32(4, true), dir = v.getInt32(8, true);
+  let found = null;
+  for (let i = 0; i < n; i++) {
+    let s = '';
+    for (let k = 0; k < 8; k++) { const c = bytes[dir + i * 16 + 8 + k]; if (!c) break; s += String.fromCharCode(c); }
+    if (s.toUpperCase() === name) { const p = v.getInt32(dir + i * 16, true); found = bytes.subarray(p, p + v.getInt32(dir + i * 16 + 4, true)); }
+  }
+  return found; // the last copy wins, as in the engine
+}
+function aliasPwad(data, names) {
+  const out = new Uint8Array(12 + data.length + names.length * 16), v = new DataView(out.buffer);
+  out.set([80, 87, 65, 68]); v.setInt32(4, names.length, true); v.setInt32(8, 12 + data.length, true);
+  out.set(data, 12);
+  names.forEach((nm, i) => {
+    const d = 12 + data.length + i * 16;
+    v.setInt32(d, 12, true); v.setInt32(d + 4, data.length, true);
+    for (let k = 0; k < nm.length; k++) out[d + 8 + k] = nm.charCodeAt(k);
+  });
+  return out;
+}
 function hasLump(bytes, name) {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const n = v.getInt32(4, true), dir = v.getInt32(8, true);
@@ -118,6 +142,8 @@ async function start(name, wadBytes) {
       $('loadmsg').textContent = 'Opening the Slipgate…';
       const quake = await slipgateBytes();
       wadBytes = appendPwad(wadBytes, quake);
+      const theme = lumpData(wadBytes, 'D_E1M1');
+      if (theme) wadBytes = appendPwad(wadBytes, aliasPwad(theme, ['D_E1M2', 'D_E1M3', 'D_E1M4']));
       map = +document.querySelector('input[name=qmap]:checked').value;
       if (!hasLump(quake, 'E1M' + map)) map = 1;  // only the Slipgate is bundled
     }
