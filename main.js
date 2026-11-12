@@ -109,7 +109,10 @@ function hasLump(bytes, name) {
   }
   return false;
 }
-const levelNote = () => { $('levelnote').hidden = document.querySelector('input[name=level]:checked').value !== 'slipgate'; };
+const levelNote = () => {
+  const quake = document.querySelector('input[name=level]:checked').value === 'slipgate';
+  $('levelnote').hidden = !quake; $('quakemaps').hidden = !quake;
+};
 document.querySelectorAll('input[name=level]').forEach((r) => r.addEventListener('change', levelNote));
 
 function showError(msg) {
@@ -127,17 +130,21 @@ async function start(name, wadBytes, remember) {
   const skill = +document.querySelector('input[name=skill]:checked').value;
   const level = document.querySelector('input[name=level]:checked').value;
   const fileBytes = wadBytes;
+  let map = 1;
   try {
     if (level === 'slipgate') {
       if (!hasLump(wadBytes, 'E1M1')) throw new Error('the Quake level needs a Doom 1-style file such as freedoom1.wad or doom.wad, not a Doom II one');
       $('loadmsg').textContent = 'Opening the Slipgate…';
-      wadBytes = appendPwad(wadBytes, await slipgateBytes());
+      const quake = await slipgateBytes();
+      wadBytes = appendPwad(wadBytes, quake);
+      map = +document.querySelector('input[name=qmap]:checked').value;
+      if (!hasLump(quake, 'E1M' + map)) map = 1;  // only the Slipgate is bundled
     }
     const wasmBytes = await engineBytes();
     const ai = await aiBytes();
     await run({
       stage, canvas: $('gl'), weaponCanvas: $('weapon'), fbCanvas: $('fb'),
-      wasmBytes, wadBytes, skill, aiBytes: ai, noAO: /[?&]noao\b/.test(location.search),
+      wasmBytes, wadBytes, skill, map, aiBytes: ai, noAO: /[?&]noao\b/.test(location.search),
       onAI: (done, total) => {
         const el = $('aistat');
         el.textContent = `AI remastering art · ${done} / ${total}`;

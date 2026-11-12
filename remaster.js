@@ -649,7 +649,7 @@ export async function run(opts) {
   }
   onProgress('Starting the engine…', 0.8);
   const audio = new GameAudio(wad);
-  const eng = await startEngine(opts.wasmBytes, wadBytes, 1, 1, opts.skill, commercial, audio.imports());
+  const eng = await startEngine(opts.wasmBytes, wadBytes, 1, opts.map || 1, opts.skill, commercial, audio.imports());
 
   // --- three.js setup
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });

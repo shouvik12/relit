@@ -47,6 +47,8 @@ h1{font-family:Impact,"Haettenschweiler","Arial Narrow Bold",sans-serif;font-wei
 .skills input:focus-visible+span{outline:3px solid var(--accent-2)}
 .levels{margin-top:-8px}
 .levelnote{margin:-10px auto 16px;max-width:520px}
+.maps{margin-top:-8px}
+.maps span{font-size:13px;padding:5px 11px}
 .play{background:var(--accent);color:#1a0a04;border:0;border-radius:999px;padding:14px 34px;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 8px 30px rgba(255,106,43,.35)}
 .play:hover{background:#ff8048}
 .play:disabled{opacity:.6;cursor:wait}
@@ -161,6 +163,12 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
     <div class="skills levels" role="radiogroup" aria-label="Level">
       <label><input type="radio" name="level" value="campaign" checked><span>Freedoom campaign</span></label>
       <label><input type="radio" name="level" value="slipgate"><span>Quake: Episode 1, Dimension of the Doomed</span></label>
+    </div>
+    <div class="skills maps" id="quakemaps" role="radiogroup" aria-label="Quake level" hidden>
+      <label><input type="radio" name="qmap" value="1" checked><span>1 · The Slipgate Complex</span></label>
+      <label><input type="radio" name="qmap" value="2"><span>2 · Castle of the Damned</span></label>
+      <label><input type="radio" name="qmap" value="3"><span>3 · The Necropolis</span></label>
+      <label><input type="radio" name="qmap" value="4"><span>4 · The Grisly Grotto</span></label>
     </div>
     <p class="small levelnote" id="levelnote" hidden>The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto, rebuilt as Doom maps from John Romero's GPL map source, with Doom's monsters, weapons and textures. Needs a Doom 1-style file such as <b>freedoom1.wad</b>.</p>
     <div class="actions">
