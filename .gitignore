@@ -11,3 +11,5 @@ dist/
 !maps/slipgate.wad
 !maps/quake-e1.wad
 __pycache__/
+!maps/arena.wad
+!game/freedoom2.wad

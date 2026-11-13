@@ -86,6 +86,9 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
 .fps{font:12px ui-monospace,Menlo,monospace;color:rgba(255,255,255,.55)}
 .aistat{font-size:12px;color:#ffd9b8;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;transition:opacity .8s}
 .aistat.off{opacity:0}
+.foes{font-size:13px;font-weight:700;color:#fff;background:rgba(160,30,10,.85);border-radius:999px;padding:6px 12px}
+.foes[hidden]{display:none}
+.foes.done{background:rgba(30,140,60,.9)}
 @media (max-width:700px){.aistat{display:none}}
 .hint{position:absolute;left:50%;top:62%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;pointer-events:none;transition:opacity .3s}
 .hint.off{opacity:0}
@@ -132,6 +135,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
   </div>
   <div class="corner">
     <span class="aistat off" id="aistat"></span>
+    <span class="foes" id="foes" hidden></span>
     <span class="fps" id="fps"></span>
     <button class="pill" id="menuBtn" data-k="27">Menu</button>
     <button class="pill" id="torch" aria-pressed="true" title="Flashlight (L)">Flashlight</button>
@@ -162,6 +166,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
     <div class="skills levels" role="radiogroup" aria-label="Level">
       <label><input type="radio" name="level" value="campaign" checked><span>Freedoom campaign</span></label>
       <label><input type="radio" name="level" value="slipgate"><span>Quake: Episode 1, Dimension of the Doomed</span></label>
+      <label><input type="radio" name="level" value="arena"><span>OpenArena: The Other Side</span></label>
     </div>
     <div class="skills maps" id="quakemaps" role="radiogroup" aria-label="Quake level" hidden>
       <label><input type="radio" name="qmap" value="1" checked><span>1 · The Slipgate Complex</span></label>
@@ -169,6 +174,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
       <label><input type="radio" name="qmap" value="3"><span>3 · The Necropolis</span></label>
       <label><input type="radio" name="qmap" value="4"><span>4 · The Grisly Grotto</span></label>
     </div>
+    <p class="small levelnote" id="arenanote" hidden>OpenArena's "The Other Side" (GPL map by Jan Groothuijse), rebuilt as a Doom II arena: chaingunners, revenants, mancubi, arachnotrons and arch-viles, with a super shotgun and plenty of shells. Plays with the built-in Freedoom: Phase 2.</p>
     <p class="small levelnote" id="levelnote" hidden>The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto, rebuilt as Doom maps from John Romero's GPL map source, with Doom's monsters, weapons and textures. </p>
     <div class="actions">
       <button class="play" id="play">Play</button>
