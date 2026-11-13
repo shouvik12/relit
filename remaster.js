@@ -803,6 +803,13 @@ export async function run(opts) {
   const ensureLevel = (s) => {
     const key = `${s.info[1]}-${s.info[2]}`;
     if (key === levelKey) return;
+    // A bundled level in a later Doom II slot (the arena is MAP07): Doom's "New Game" always
+    // starts map 1, so send it straight back with the engine's own level-warp cheat.
+    if (commercial && opts.map > 1 && levelKey === `1-${opts.map}` && s.info[2] === 1) {
+      levelKey = key;
+      for (const c of 'idclev' + String(opts.map).padStart(2, '0')) { eng.e.dgx_key(1, c.charCodeAt(0)); eng.e.dgx_key(0, c.charCodeAt(0)); }
+      return;
+    }
     levelKey = key;
     if (lv) { scene.remove(lv.group); lv.group.traverse((o) => o.geometry && o.geometry.dispose()); }
     for (const m of spriteMeshes.values()) { scene.remove(m); m.geometry.dispose(); }

@@ -34,3 +34,36 @@ Rebuild (the converter needs `pip install numpy shapely`):
       zdbsp -R -o e1m$m.wad e1m$m.raw.wad
     done
     python3 tools/quake2doom/pack.py maps/quake-e1.wad e1m1.wad e1m2.wad e1m3.wad e1m4.wad
+
+## arena.wad: OpenArena's "The Other Side" (oacmpdm5), as a Doom II arena
+
+- **Source:** `oacmpdm5.map` by Jan Groothuijse, from the OpenArena Community Mappack Volume 1
+  (github.com/NeonKnightOA/oacmpvol1), released under the **GNU GPL, version 2 or later**. The map
+  source and its readme are kept in [`src/`](src). Only the layout and item placement are used: no
+  OpenArena textures, sounds or models are included.
+- **Converted by** `tools/quake2doom/quake2doom.py`, which also reads Quake III `.map` files, then
+  nodes built with `tools/quake2doom/nodes.py`.
+- **Looks and gameplay** come from Freedoom: Phase 2 (BSD): Doom II textures, weapons and monsters.
+- Licence of this file: GPL-2.0-or-later, as a derivative of the GPL map source.
+
+What changes from OpenArena:
+- Curved patches are flattened into small straight blocks.
+- Doom can't stack floors. Where walkways stack, the lower one is kept and the space above it is
+  opened up, so what is left of the upper walkway is a raised ledge looking down on it. The bridges
+  over the pit are gone; the block in the middle keeps its top.
+- Jump pads and teleporters are Doom teleporters. A jump pad sets you down where the jump would have
+  landed (if that floor was kept); a teleporter whose landing was an upper walkway now lands on the
+  floor underneath.
+- It is a single-player fight, not a deathmatch: chaingunners, revenants, mancubi, arachnotrons and
+  a few arch-viles (17 / 27 / 39 monsters on easy / medium / hard). They stand out of sight of the
+  start, facing into the arena, so nothing reacts until the first shot is heard. A super shotgun, shells and a backpack are at the start; 20 boxes of shells and
+  10 boxes of rockets are spread around.
+- The level sits in the MAP07 slot, so Doom II's own rule applies: when the last mancubus dies the
+  exit pad at the north end of the arena lowers. Step on it to finish; the game carries on into
+  Freedoom's level 8.
+
+Rebuild:
+    python3 tools/quake2doom/quake2doom.py maps/src/oacmpdm5.map tools/quake2doom/freedoom2_textures.json arena MAP07
+    python3 tools/quake2doom/nodes.py arena.raw.wad maps/arena.wad
+
+Options for small test builds: `--crop x0,y0,x1,y1` keeps one area, `--monsters N` places only N monsters.

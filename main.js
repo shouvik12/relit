@@ -27,6 +27,21 @@ async function freedoomBytes() {
   throw new Error('Could not load the built-in Freedoom (game/freedoom1.wad)');
 }
 
+// The arena is a Doom II level, so it plays with Freedoom: Phase 2 (BSD), also bundled.
+async function freedoom2Bytes() {
+  if (window.RELIT_FREEDOOM2) return gunzip(b64(window.RELIT_FREEDOOM2));
+  for (const f of ['game/freedoom2.wad', '../game/freedoom2.wad']) {
+    try { const r = await fetch(f); if (r.ok) return new Uint8Array(await r.arrayBuffer()); } catch { /* try the next */ }
+  }
+  throw new Error('Could not load the built-in Freedoom: Phase 2 (game/freedoom2.wad)');
+}
+async function arenaBytes() {
+  if (window.RELIT_ARENA) return gunzip(b64(window.RELIT_ARENA));
+  const r = await fetch('maps/arena.wad');
+  if (r.ok) return new Uint8Array(await r.arrayBuffer());
+  throw new Error('Could not load the arena (maps/arena.wad)');
+}
+
 async function engineBytes() {
   if (window.RELIT_WASM) {
     const bin = atob(window.RELIT_WASM), out = new Uint8Array(bin.length);
@@ -118,6 +133,7 @@ function hasLump(bytes, name) {
 const levelNote = () => {
   const quake = document.querySelector('input[name=level]:checked').value === 'slipgate';
   $('levelnote').hidden = !quake; $('quakemaps').hidden = !quake;
+  $('arenanote').hidden = document.querySelector('input[name=level]:checked').value !== 'arena';
 };
 document.querySelectorAll('input[name=level]').forEach((r) => r.addEventListener('change', levelNote));
 
@@ -147,6 +163,15 @@ async function start(name, wadBytes) {
       map = +document.querySelector('input[name=qmap]:checked').value;
       if (!hasLump(quake, 'E1M' + map)) map = 1;  // only the Slipgate is bundled
     }
+    if (level === 'arena') {
+      if (!hasLump(wadBytes, 'MAP01')) throw new Error('the arena needs a Doom II-style file such as freedoom2.wad or doom2.wad, for its monsters and the super shotgun');
+      $('loadmsg').textContent = 'Opening the arena…';
+      wadBytes = appendPwad(wadBytes, await arenaBytes());
+      map = 7;
+      // same as the Quake levels: the campaign's opening track (MAP01's) plays in the arena
+      const theme = lumpData(wadBytes, 'D_RUNNIN');
+      if (theme) wadBytes = appendPwad(wadBytes, aliasPwad(theme, ['D_SHAWN']));
+    }
     const wasmBytes = await engineBytes();
     const ai = await aiBytes();
     await run({
@@ -168,7 +193,7 @@ async function start(name, wadBytes) {
       onCrash: (err, log) => { console.error(err, log); },
       onQuit: () => location.reload(),  // back to the start screen
       status: (fps) => { $('fps').textContent = fps + ' fps'; },
-      hud: (P, msgAge) => {
+      hud: function hud(P, msgAge) {
         const ammo = P[9] < 0 ? '–' : P[9] | 0;
         const key = `${P[6]}|${P[7]}|${ammo}|${P[24]}${P[25]}${P[26]}`;
         if (key !== lastHud) {
@@ -177,6 +202,16 @@ async function start(name, wadBytes) {
           arEl.querySelector('b').textContent = P[7] | 0;
           amEl.querySelector('b').textContent = ammo; amEl.classList.toggle('low', P[9] >= 0 && P[9] < 10);
           $('kb').classList.toggle('on', !!P[24]); $('ky').classList.toggle('on', !!P[25]); $('kr').classList.toggle('on', !!P[26]);
+        }
+        if (level === 'arena') {
+          const left = Math.max(0, (P[28] | 0) - (P[27] | 0)), fk = left + '|' + (P[28] | 0);
+          if (fk !== hud.foes) {
+            hud.foes = fk; const el = $('foes'); el.hidden = false;
+            el.textContent = left ? `Monsters left: ${left} / ${P[28] | 0}` : 'Arena clear! Exit pad at the north end is open';
+            el.classList.toggle('done', !left);
+          }
+          if (!hud.told) { hud.told = true; msgEl.textContent = 'Kill every mancubus to open the exit pad at the north end. Silver pads launch you; red pads teleport.'; msgEl.style.opacity = 1; hud.toldAt = performance.now(); }
+          if (performance.now() - hud.toldAt < 9000) return;
         }
         if (msgAge > 3500) msgEl.style.opacity = 0;
       },
@@ -211,5 +246,6 @@ $('exit').addEventListener('click', () => location.reload());
 // one-click play with the built-in Freedoom
 $('play').addEventListener('click', async () => {
   $('load').hidden = false; $('loadmsg').textContent = 'Loading Freedoom…';
-  try { start('freedoom1.wad', await freedoomBytes()); } catch (err) { showError(err.message + '.'); }
+  const arena = document.querySelector('input[name=level]:checked').value === 'arena';
+  try { start(arena ? 'freedoom2.wad' : 'freedoom1.wad', await (arena ? freedoom2Bytes : freedoomBytes)()); } catch (err) { showError(err.message + '.'); }
 });
