@@ -26,6 +26,7 @@ from shapely.strtree import STRtree
 EPS = 0.05
 STEP_UP = 24
 HEADROOM = 56
+WATER_JUMP = 72  # how far above the water a swimming Quake player can climb out
 
 
 # ---------------------------------------------------------------- .map parsing
@@ -514,7 +515,8 @@ def simplify_lines(m):
 
 
 # ---------------------------------------------------------------- main conversion
-def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=None, exit_class='team_CTF_redflag'):
+def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=None, exit_class='team_CTF_redflag',
+            water_jump=False):
     ents = parse_map(open(map_path).read())
     sign = find_sign(ents)
     tex_ok, flat_ok = load_names(names_path)
@@ -531,10 +533,10 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
     world = ents[0]
     solids, liquids, doors, plats = [], [], [], []
     triggers = {'exit': [], 'teleport': []}
-    warps = []  # Quake III teleporters and jump pads: {'ent', 'kind', 'target'}
+    warps = []  # teleporters (and Quake III jump pads): {'ent', 'kind', 'target'}
     for ei, e in enumerate(ents):
         cls = e['kv'].get('classname', '')
-        if q3 and cls in ('trigger_teleport', 'trigger_push'):
+        if cls == 'trigger_teleport' or (q3 and cls == 'trigger_push'):
             warps.append({'ent': ei, 'kind': 'tele' if cls == 'trigger_teleport' else 'push',
                           'target': e['kv'].get('target')})
         if cls in ('worldspawn', 'func_group', 'func_static'):
@@ -729,6 +731,32 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
                     break
     print('thin bridges', added, file=sys.stderr)
 
+    # Quake players swim and hop out of water onto a ledge a little above the surface. Doom
+    # can't, so a pool whose bank is up to WATER_JUMP above its surface is filled up until
+    # that bank is a normal step out.
+    if water_jump and not q3:
+        lift = {}
+        for a in range(len(faces)):
+            for ga in face_gaps[a]:
+                if 'liq' not in ga:
+                    continue
+                lid = ga['liq'][0]
+                for b in nbrs[a]:
+                    for gb in face_gaps[b]:
+                        if 'liq' in gb:
+                            continue
+                        rise = gb['f'] - ga['f']
+                        if STEP_UP < rise <= WATER_JUMP and min(ga['c'], gb['c']) - gb['f'] >= HEADROOM:
+                            lift[lid] = max(lift.get(lid, -1e9), gb['f'] - STEP_UP)
+        raised = 0
+        for gaps in face_gaps:
+            for g in gaps:
+                if 'liq' in g and g['liq'][0] in lift and g['f'] < lift[g['liq'][0]]:
+                    z = lift[g['liq'][0]]
+                    if g['c'] - z >= HEADROOM:
+                        g['f'] = z; raised += 1
+        print('pools raised for water jumps', len(lift), raised, file=sys.stderr)
+
     face_tree = STRtree(faces)
 
     def face_at(x, y):
@@ -824,6 +852,8 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
         here = Point(to[0], to[1])
         for fi in face_tree.query(here.buffer(reach)):
             fi = int(fi)
+            if not q3 and any(k in face_flags[fi] for k in ('door', 'plat', 'exit', 'warp')):
+                continue  # land on plain floor: a door, lift or another teleporter can't carry the tag
             for gi in pick(fi):
                 g = face_gaps[fi][gi]
                 if not (zmin <= g['f'] <= zmax) or g['c'] - g['f'] < HEADROOM:
@@ -974,7 +1004,13 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
                 continue
             if (a, ga_i) in exit_states:
                 goal = (a, ga_i); break
-            for b, gj, st in moves(a, ga_i):
+            steps = list(moves(a, ga_i))
+            fl = face_flags[a]; g = face_gaps[a][ga_i]
+            if 'warp' in fl and g['f'] < fl['tele'][1] and g['f'] + HEADROOM > fl['tele'][0]:
+                d = warp_of[fl['warp']]['dest']
+                if d is not None:
+                    steps.append((d[0], d[1], 8.0))
+            for b, gj, st in steps:
                 nc = cst + st
                 if nc < dist.get((b, gj), 1e18):
                     dist[(b, gj)] = nc; prev[(b, gj)] = (a, ga_i); heapq.heappush(heap, (nc, b, gj))
@@ -998,6 +1034,8 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
             gi = gap_for(fi, o[2] - 24)
             if gi is not None:
                 claim_from([(0.0, fi, gi)])
+        for w in warps:
+            w['dest'] = resolve_warp(w, lambda fi: [chosen[fi]] if fi in chosen else [])
     print(f'reachable faces: {len(chosen)} / {len(faces)}', file=sys.stderr)
 
     # lights
@@ -1066,6 +1104,8 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
     if q3:
         top_floor = max(face_gaps[fi][gi]['f'] for fi, gi in chosen.items() if fi not in scenery)
         sky_z = int(math.ceil((top_floor + 320) / 64.0) * 64)  # one sky height over the whole arena
+    # each teleporter gets its own tag, shared only by teleporters landing on the same floor
+    if True:
         for w in warps:
             if w['dest'] is None or w['dest'][0] not in chosen:
                 continue
@@ -1081,6 +1121,7 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
                 if j in chosen and abs(face_gaps[j][chosen[j]]['f'] - face_gaps[dfi][dgi]['f']) < 1 \
                         and 'warp' not in face_flags[j] and faces[j].distance(Point(dx, dy)) < 20:
                     dest_faces.setdefault(j, w['ent'])
+    if q3:
         # The way out: a pad at the map's marked spot. On MAP07 Doom II lowers every sector
         # tagged 666 once the last mancubus dies, so the pad starts raised out of reach.
         for e in ents:
@@ -1115,8 +1156,10 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
             kind = ('plat', fl['plat'][0]); fz = unit_floor[kind]
         if 'exit' in fl:
             kind = ('exit',)
-        if 'tele' in fl and g['f'] < fl['tele'][1] and g['f'] + HEADROOM > fl['tele'][0]:
-            kind = ('tele',)  # only where the floor we kept is at the teleporter's height
+        if fl.get('warp') in warp_tag and g['f'] < fl['tele'][1] and g['f'] + HEADROOM > fl['tele'][0]:
+            kind = ('tele', fl['warp'])  # only where the floor we kept is at the teleporter's height
+        elif fi in dest_faces and not kind:
+            kind = ('teledest', dest_faces[fi])
         if q3:
             kind = None
             if fl.get('warp') in warp_tag and g['f'] < fl['tele'][1] and g['f'] + HEADROOM > fl['tele'][0]:
@@ -1137,7 +1180,7 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
             sec_key_index[k] = len(sectors)
             sectors.append({'floor': fz, 'ceil': cz, 'fflat': ff, 'cflat': cf, 'light': light,
                             'special': special, 'tag': 0, 'kind': kind})
-            if q3 and kind:
+            if kind:
                 sec = sectors[-1]
                 if kind[0] == 'tele':
                     sec['warp_tag'] = warp_tag[kind[1]]
@@ -1158,7 +1201,7 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
             sec['tag'] = plat_tags[ent]
 
     # teleport destination sector tag
-    for e in ents:
+    for e in ents if False else []:
         if e['kv'].get('classname') == 'info_teleport_destination':
             o = [float(v) for v in e['kv']['origin'].split()]
             fi = face_at(o[0], o[1])
@@ -1167,6 +1210,28 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
                 # give the destination its own sector so the tag is unique
                 ns = dict(s); ns['tag'] = tele_tag; ns['kind'] = ('teledest',)
                 sectors.append(ns); face_sector[fi] = len(sectors) - 1
+
+    # Quake 1: the landing spot must stand in a sector carrying its teleporter's tag
+    if not q3:
+        for w in warps:
+            if w['ent'] not in warp_tag or w.get('shared'):
+                continue
+            fi = face_at(w['dest'][2], w['dest'][3])
+            if fi not in face_sector:
+                continue
+            s = sectors[face_sector[fi]]
+            if s['kind'] is not None and s['kind'][0] != 'teledest':
+                # the spot fell on a door or lift next to the landing floor: stand in the landing floor itself
+                dfi = w['dest'][0]
+                if dfi in face_sector and sectors[face_sector[dfi]]['tag'] == warp_tag[w['ent']]:
+                    from shapely.ops import polylabel
+                    p = polylabel(faces[dfi], 1.0)
+                    w['dest'] = (dfi, w['dest'][1], float(round(p.x)), float(round(p.y)), w['dest'][4])
+                continue
+            if s['tag'] == warp_tag[w['ent']]:
+                continue
+            ns = dict(s); ns['tag'] = warp_tag[w['ent']]; ns['kind'] = ('teledest', w['ent'])
+            sectors.append(ns); face_sector[fi] = len(sectors) - 1
 
     # edges
     verts, vidx = [], {}
@@ -1284,9 +1349,10 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
     # 6. things
     THING = {
         'info_player_start': 1, 'info_player_coop': 2, 'info_player_deathmatch': 11,
-        'info_teleport_destination': 14,
+        # info_teleport_destination: its landing spot is placed with the teleporter's tag
         'monster_dog': 3002, 'monster_ogre': 3001, 'monster_knight': 3001, 'monster_wizard': 3005,
         'monster_demon1': 3003, 'monster_shambler': 3003, 'monster_zombie': 3004,
+        'monster_boss': 16,  # Chthon: a Cyberdemon guards the lava pit
         'item_health': 2012, 'item_shells': 2008, 'item_spikes': 2007, 'item_rockets': 2010,
         'item_cells': 2047, 'item_armor1': 2018, 'item_armor2': 2019, 'item_armorInv': 2019,
         'item_artifact_super_damage': 2023, 'item_artifact_invulnerability': 2022,
@@ -1352,12 +1418,12 @@ def convert(map_path, names_path, out_json, mapname='E1M1', crop=None, monsters=
         things.append({'x': int(round(o[0])), 'y': int(round(o[1])), 'angle': int(float(e['kv'].get('angle', 0))) % 360,
                        'type': t, 'flags': flags})
 
+    # where a teleporter or jump pad sets the player down
+    for w in warps:
+        if w['ent'] in warp_tag and not w.get('shared'):
+            _, _, dx, dy, ang = w['dest']
+            things.append({'x': int(dx), 'y': int(dy), 'angle': int(round(ang / 45.0) * 45) % 360, 'type': 14, 'flags': 7})
     if q3:
-        # where a teleporter or jump pad sets the player down
-        for w in warps:
-            if w['ent'] in warp_tag and not w.get('shared'):
-                _, _, dx, dy, ang = w['dest']
-                things.append({'x': int(dx), 'y': int(dy), 'angle': int(round(ang / 45.0) * 45) % 360, 'type': 14, 'flags': 7})
         def floor_ceil(x, y):
             fi = face_at(x, y)
             if fi not in face_sector:
@@ -1505,7 +1571,7 @@ def write_wad(m, path):
 
 
 if __name__ == '__main__':
-    # quake2doom.py in.map textures.json outbase [MAPNAME] [--crop x0,y0,x1,y1] [--monsters N]
+    # quake2doom.py in.map textures.json outbase [MAPNAME] [--crop x0,y0,x1,y1] [--monsters N] [--water-jump]
     args, opts = [], {}
     it = iter(sys.argv[1:])
     for a in it:
@@ -1513,6 +1579,8 @@ if __name__ == '__main__':
             opts['crop'] = [float(v) for v in next(it).split(',')]
         elif a == '--monsters':
             opts['monsters'] = int(next(it))
+        elif a == '--water-jump':
+            opts['water_jump'] = True
         else:
             args.append(a)
     m = convert(args[0], args[1], args[2] + '.json', args[3] if len(args) > 3 else 'E1M1', **opts)

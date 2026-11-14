@@ -18,11 +18,22 @@ Rebuild:
     python3 tools/quake2doom/quake2doom.py e1m1.map tools/quake2doom/freedoom1_textures.json slipgate E1M1
     zdbsp -R -o maps/slipgate.wad slipgate.raw.wad
 
-## quake-e1.wad: Quake episode 1, E1M1 to E1M4, as Doom levels
+## quake-e1.wad: Quake episode 1, all eight levels, as Doom levels
 
 The Slipgate Complex, Castle of the Damned, The Necropolis and The Grisly Grotto, from the
 same GPL map source release, converted the same way. Finishing one level leads into the
-next; after the Grisly Grotto the game carries on into the player's own E1M5.
+next. The order follows Quake's own route, with the secret level in line:
+
+| Doom slot | Quake level |
+|---|---|
+| E1M1 to E1M4 | e1m1 to e1m4 |
+| E1M5 | e1m8, Ziggurat Vertigo (Quake's secret level, reached from e1m4) |
+| E1M6 | e1m5, Gloom Keep (built with `--water-jump`) |
+| E1M7 | e1m6, The Door to Chthon |
+| E1M8 | e1m7, The House of Chthon (ends the episode; Chthon is a Cyberdemon) |
+
+`--water-jump` raises a pool whose bank is up to 72 units above the water, so a Doom player
+can step out where a Quake player would swim and climb. Gloom Keep's moat needs it.
 
 E1M3 and E1M4 are big: after conversion they have more than 32767 sidedefs, which vanilla
 Doom can't index. Relit's engine reads map indices as unsigned 16-bit numbers (as Boom-style
@@ -33,7 +44,12 @@ Rebuild (the converter needs `pip install numpy shapely`):
       python3 tools/quake2doom/quake2doom.py e1m$m.map tools/quake2doom/freedoom1_textures.json e1m$m E1M$m
       zdbsp -R -o e1m$m.wad e1m$m.raw.wad
     done
-    python3 tools/quake2doom/pack.py maps/quake-e1.wad e1m1.wad e1m2.wad e1m3.wad e1m4.wad
+    python3 tools/quake2doom/quake2doom.py e1m8.map tools/quake2doom/freedoom1_textures.json e1m8 E1M5
+    python3 tools/quake2doom/quake2doom.py e1m5.map tools/quake2doom/freedoom1_textures.json e1m5 E1M6 --water-jump
+    python3 tools/quake2doom/quake2doom.py e1m6.map tools/quake2doom/freedoom1_textures.json e1m6 E1M7
+    python3 tools/quake2doom/quake2doom.py e1m7.map tools/quake2doom/freedoom1_textures.json e1m7 E1M8
+    for m in 8 5 6 7; do python3 tools/quake2doom/nodes.py e1m$m.raw.wad e1m$m.wad; done
+    python3 tools/quake2doom/pack.py maps/quake-e1.wad e1m1.wad e1m2.wad e1m3.wad e1m4.wad e1m8.wad e1m5.wad e1m6.wad e1m7.wad
 
 ## arena.wad: OpenArena's "The Other Side" (oacmpdm5), as a Doom II arena
 
