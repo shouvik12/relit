@@ -8,7 +8,7 @@ Relit keeps Doom's original engine running the game, every rule, monster and doo
 
 <p align="center"><sub>The same doorway, same moment, zoomed in. Left: the 1993 renderer. Right: Relit. One key flips between them.</sub></p>
 
-> 🆕 **New: play all four levels of Quake's first episode on Doom's 1993 engine.** [See the Quake episode ↓](#bonus-episode-quake-episode-1)
+> 🆕 **New: play all eight levels of Quake's first episode on Doom's 1993 engine, from the Slipgate Complex to Chthon.** [See the Quake episode ↓](#bonus-episode-quake-episode-1)
 >
 > 🆕 **New: a Quake III-style arena from OpenArena, packed with Doom II's toughest monsters.** [See the arena ↓](#bonus-level-openarena-the-other-side)
 
@@ -20,7 +20,7 @@ Everything you need is in this repo, including a free game to play.
 
 1. **Get it:** `git clone https://github.com/shouvik12/relit.git`, or click **Code → Download ZIP** and unzip it.
 2. **Open `relit.html`** with a double-click. It runs straight from your disk: no install, no server, no account.
-3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 4) or **OpenArena: The Other Side**. Freedoom is built in, so there's no file to find.
+3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 8) or **OpenArena: The Other Side**. Freedoom is built in, so there's no file to find.
 
 ```
 relit/
@@ -73,7 +73,7 @@ Own the original Doom? Click **Use your own doom.wad** on the start screen, or d
 | **Freedoom: Phase 2** (32 levels) | Included: `game/freedoom2.wad` | ✅ Ready to play |
 | **Doom** (`doom.wad`) | Your own copy (Steam, GOG) | ✅ Tested |
 | **Doom II** (`doom2.wad`) | Your own copy (Steam, GOG) | ✅ Tested |
-| **Quake: Episode 1** (4 bonus levels) | Built in; pick it on the start screen | ✅ Ready to play |
+| **Quake: Episode 1** (all 8 levels) | Built in; pick it on the start screen | ✅ Ready to play |
 | **OpenArena: The Other Side** (bonus arena) | Built in; pick it on the start screen | ✅ Ready to play |
 
 Own the original games? Pick your `doom.wad` or `doom2.wad` and play id Software's original levels with Relit's new look. Your file stays on your machine.
@@ -82,7 +82,7 @@ Own the original games? Pick your `doom.wad` or `doom2.wad` and play id Software
 
 ![Fighting through Quake's Slipgate Complex in Relit](docs/quake-fight.gif)
 
-The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto: Quake's first episode, rebuilt as Doom maps and played on Doom's original 1993 engine, with Doom's monsters, weapons and Freedoom's textures. Relit draws it with the same real-time lighting as every other level, so muzzle flashes and fireballs light up Quake's corridors.
+All eight levels of Quake's first episode, Dimension of the Doomed, rebuilt as Doom maps and played on Doom's original 1993 engine, with Doom's monsters, weapons and Freedoom's textures. Relit draws it with the same real-time lighting as every other level, so muzzle flashes and fireballs light up Quake's corridors.
 
 | | |
 |---|---|
@@ -95,12 +95,20 @@ The Slipgate Complex, Castle of the Damned, the Necropolis and the Grisly Grotto
 | ![E1M1, The Slipgate Complex](docs/quake-e1m1-slipgate.jpg)<br>**1 · The Slipgate Complex** | ![E1M2, Castle of the Damned](docs/quake-e1m2-castle.jpg)<br>**2 · Castle of the Damned** |
 | ![E1M3, The Necropolis](docs/quake-e1m3-necropolis.jpg)<br>**3 · The Necropolis** | ![E1M4, The Grisly Grotto](docs/quake-e1m4-grotto.jpg)<br>**4 · The Grisly Grotto** |
 
-**How to play:** open `relit.html`, click **Quake: Episode 1**, pick a level (1 to 4) and press **Play**. Freedoom is built in, so there's no file to choose. Finishing a level leads into the next. Classic cheats work too: `IDDQD`, `IDKFA`, `IDCLEV12`.
+**All eight levels**, in the order Quake plays them (its secret level, Ziggurat Vertigo, comes after the Grisly Grotto, as in Quake):
+
+1 · The Slipgate Complex · 2 · Castle of the Damned · 3 · The Necropolis · 4 · The Grisly Grotto · 5 · Ziggurat Vertigo · 6 · Gloom Keep · 7 · The Door to Chthon · 8 · The House of Chthon
+
+Every level has its own upbeat track from the game file's soundtrack.
+
+**How to play:** open `relit.html`, click **Quake: Episode 1**, pick a level (1 to 8) and press **Play**. Freedoom is built in, so there's no file to choose. Finishing a level leads into the next, and the House of Chthon ends the episode. Classic cheats work too: `IDDQD`, `IDKFA`, `IDCLEV12`.
 
 **How it was made:**
-- It starts from the original Quake map sources (`e1m1.map` to `e1m4.map`) that John Romero released under the **GPL in 2006**. Only the layout and object placement are used; no Quake art or sound is included.
+- It starts from the original Quake map sources (`e1m1.map` to `e1m8.map`) that John Romero released under the **GPL in 2006**. Only the layout and object placement are used; no Quake art or sound is included.
 - [`tools/quake2doom`](tools/quake2doom) converts Quake's 3D brushes into a Doom map: floors and ceilings, doors, lifts (including Quake's elevator), the exit, light levels from Quake's 190 lights, and monsters and items swapped for their Doom equivalents.
 - Doom levels can't stack rooms, so where Quake has a room above another, the floor on the walking route is kept. Ramps become small steps, and water and slime become shallow pools.
+- Every Quake teleporter keeps its own destination. Gloom Keep's moat is raised so you can step out where Quake players would swim and climb.
+- Ziggurat Vertigo plays with normal gravity, and Chthon is a Cyberdemon in his lava pit: shoot him down instead of using Quake's electrode trap.
 - The Necropolis and the Grisly Grotto are far bigger than any 1993 map, so Relit's engine reads map data as unsigned 16-bit numbers (as Boom-style ports do) and gives each level a 64 MB memory pool. The Slipgate runs at Freedoom's frame rate; the two big maps are heavier.
 
 Details in [`maps/README.md`](maps/README.md). Works with Doom 1-style files such as `freedoom1.wad`.

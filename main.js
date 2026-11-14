@@ -56,7 +56,7 @@ async function engineBytes() {
 // ---- bundled extra levels ----------------------------------------------
 // The Quake levels ship as a PWAD (a Doom add-on file). Relit appends its lumps to
 // the player's game file in memory; the engine and the 3D renderer both use the last
-// copy of a lump name, so the bundled E1M1-E1M4 replace the game's own for this session,
+// copy of a lump name, so the bundled E1M1-E1M8 replace the game's own for this session,
 // and finishing one Quake level leads straight into the next.
 async function gunzip(bytes) {
   const ds = new DecompressionStream('gzip');
@@ -109,6 +109,8 @@ function lumpData(bytes, name) {
   }
   return found; // the last copy wins, as in the engine
 }
+// Music for Quake levels 1-8: the fastest, busiest tracks in the game file
+const QUAKE_MUSIC = ['D_E1M1', 'D_E4M2', 'D_E3M4', 'D_E2M9', 'D_E3M9', 'D_E4M5', 'D_E3M2', 'D_E3M7'];
 function aliasPwad(data, names) {
   const out = new Uint8Array(12 + data.length + names.length * 16), v = new DataView(out.buffer);
   out.set([80, 87, 65, 68]); v.setInt32(4, names.length, true); v.setInt32(8, 12 + data.length, true);
@@ -158,8 +160,12 @@ async function start(name, wadBytes) {
       $('loadmsg').textContent = 'Opening the Slipgate…';
       const quake = await slipgateBytes();
       wadBytes = appendPwad(wadBytes, quake);
+      // an upbeat track of the game's own for each level (falls back to E1M1's if the file lacks it)
       const theme = lumpData(wadBytes, 'D_E1M1');
-      if (theme) wadBytes = appendPwad(wadBytes, aliasPwad(theme, ['D_E1M2', 'D_E1M3', 'D_E1M4']));
+      QUAKE_MUSIC.forEach((src, i) => {
+        const tune = lumpData(wadBytes, src) || theme;
+        if (tune && i > 0) wadBytes = appendPwad(wadBytes, aliasPwad(tune, ['D_E1M' + (i + 1)]));
+      });
       map = +document.querySelector('input[name=qmap]:checked').value;
       if (!hasLump(quake, 'E1M' + map)) map = 1;  // only the Slipgate is bundled
     }
