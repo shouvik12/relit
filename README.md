@@ -8,6 +8,8 @@ Relit keeps Doom's original engine running the game, every rule, monster and doo
 
 <p align="center"><sub>The same doorway, same moment, zoomed in. Left: the 1993 renderer. Right: Relit. One key flips between them.</sub></p>
 
+> 🆕 **New: Wrecklight, car combat on Doom's engine. Pick a car, arm it with a roof gun and rockets, and race a lava track full of demons.** [See Wrecklight ↓](#bonus-level-wrecklight-car-combat)
+>
 > 🆕 **New: play all eight levels of Quake's first episode on Doom's 1993 engine, from the Slipgate Complex to Chthon.** [See the Quake episode ↓](#bonus-episode-quake-episode-1)
 >
 > 🆕 **New: a Quake III-style arena from OpenArena, packed with Doom II's toughest monsters.** [See the arena ↓](#bonus-level-openarena-the-other-side)
@@ -20,7 +22,7 @@ Everything you need is in this repo, including a free game to play.
 
 1. **Get it:** `git clone https://github.com/shouvik12/relit.git`, or click **Code → Download ZIP** and unzip it.
 2. **Open `relit.html`** with a double-click. It runs straight from your disk: no install, no server, no account.
-3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 8) or **OpenArena: The Other Side**. Freedoom is built in, so there's no file to find.
+3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 8), **OpenArena: The Other Side** or **Wrecklight: car combat** (then a car). Freedoom is built in, so there's no file to find.
 
 ```
 relit/
@@ -63,6 +65,8 @@ Own the original Doom? Click **Use your own doom.wad** on the start screen, or d
 | **V** | Flip between 1993 and Relit |
 | **Esc** | Menu, and frees the mouse |
 
+In Wrecklight you drive instead; its keys are [listed below](#bonus-level-wrecklight-car-combat).
+
 ---
 
 ## What you can play
@@ -75,6 +79,7 @@ Own the original Doom? Click **Use your own doom.wad** on the start screen, or d
 | **Doom II** (`doom2.wad`) | Your own copy (Steam, GOG) | ✅ Tested |
 | **Quake: Episode 1** (all 8 levels) | Built in; pick it on the start screen | ✅ Ready to play |
 | **OpenArena: The Other Side** (bonus arena) | Built in; pick it on the start screen | ✅ Ready to play |
+| **Wrecklight** (car combat) | Built in; pick it on the start screen | 🧪 New, still being tuned |
 
 Own the original games? Pick your `doom.wad` or `doom2.wad` and play id Software's original levels with Relit's new look. Your file stays on your machine.
 
@@ -130,6 +135,47 @@ Works with Doom II-style files such as `freedoom2.wad` or `doom2.wad`.
 
 ---
 
+### Bonus level: Wrecklight, car combat
+
+![Racing across lava in Wrecklight](docs/wrecklight.jpg)
+
+A night lap of Stunt Rally's volcanic "Dark" track, rebuilt as a Doom II level, driven in an armed car. Doom's monsters line the 1.4 km road. Ram them, shoot them, and wreck every mancubus to open the gate before the finish line.
+
+**How to play:** open `relit.html`, click **Wrecklight: car combat**, pick a car and press **Play**. It uses the built-in Freedoom: Phase 2, so there's no file to choose. The bar at the top shows the mancubi left, your rockets and your speed.
+
+| Car | What it is |
+|---|---|
+| **Ironhide** | Off-roader with a bull bar (Stunt Rally's LK4) |
+| **Quicksilver** | Low race car with a rear wing (Stunt Rally's XZ) |
+| **Old Thunder** | 1940s truck (Stunt Rally's OT) |
+| **Rammer** | Relit's own blocky car |
+
+Every car carries a roof gun, rocket pods and steel ram bars.
+
+| Key | Action |
+|---|---|
+| **W** or **↑** | Gas |
+| **S** or **↓** | Brake, then reverse |
+| **A D** or **← →** | Steer (turns on the spot when stopped) |
+| **Space** | Roof gun |
+| **F** or **Shift** | Rockets |
+| **Mouse** | Look around the car (click the game first) |
+| **C** | Camera: close chase, far chase, driver's seat |
+| **L** | Headlights |
+| **R** | Back on the road |
+| **V** | Flip between 1993 and Relit |
+
+How it was made:
+- The track is Stunt Rally 3's "Dark" (`vlc1-dark`), under the **GPL v3**. [`tools/stuntrally2doom`](tools/stuntrally2doom) turns its heightmap and road spline into Doom sectors: road, kerbs, roadside and cliff rims, with bridges raised over drops and low ground turned into lava.
+- The three Stunt Rally cars are **CC0**, converted by [`tools/stuntrally-car`](tools/stuntrally-car). Relit adds the weapons and lamps.
+- The engine gets a small car mode (`relit_car.c`): steering, grip, drag, ramming damage and rockets. The level sits in Doom II's MAP07 slot, so the gate opens when the last mancubus dies.
+
+Still being tuned: handling and difficulty. Crossing the finish line currently carries on into Freedoom's level 8 on foot; a proper finish screen is coming.
+
+Works with Doom II-style files such as `freedoom2.wad` or `doom2.wad`.
+
+---
+
 ## How it works
 
 ```
@@ -175,6 +221,8 @@ Played your own `doom2.wad` with it? Found a room that looks incredible with the
 - **Doom engine** © id Software, released under the GPL. Ported to the browser via [doomgeneric](https://github.com/ozkl/doomgeneric).
 - **Freedoom** by the [Freedoom project](https://freedoom.github.io), under a BSD licence (`game/FREEDOOM-LICENSE.txt`). Phase 1 and Phase 2 are both included.
 - **OpenArena "The Other Side" (`oacmpdm5`)** by Jan Groothuijse, from the OpenArena Community Mappack Volume 1, under the GPL v2 or later; converted into `maps/arena.wad`. The source is in `maps/src/`. No OpenArena art or sound is included.
+- **Stunt Rally 3 track "Dark" (`vlc1-dark`)** by Crystal Hammer and contributors, under the GPL v3; converted into `maps/wrecklight.wad`, which is GPL-3.0-or-later. The source is in `maps/src/vlc1-dark/`.
+- **Stunt Rally 3 cars** LK4 (clarabox, CryHam), XZ (Neubi) and OT (irokrhus), all CC0; converted into `maps/cars/`. See `licenses/stuntrally-cars.txt`.
 - **Quake E1M1–E1M4 map sources** by id Software, released by John Romero under the GPL (2006); converted into `maps/quake-e1.wad`. No Quake art or sound is included.
 - **OPL music emulation** from DOSBox and Chocolate Doom (GPL-2.0-or-later).
 - **Three.js** (MIT), **earcut** (ISC), **browser_wasi_shim** (MIT/Apache-2.0) and the **Real-ESRGAN** `realesr-general-x4v3` model weights (BSD-3-Clause). See `licenses/`.

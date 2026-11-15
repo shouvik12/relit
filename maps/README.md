@@ -83,3 +83,38 @@ Rebuild:
     python3 tools/quake2doom/nodes.py arena.raw.wad maps/arena.wad
 
 Options for small test builds: `--crop x0,y0,x1,y1` keeps one area, `--monsters N` places only N monsters.
+
+## wrecklight.wad: Stunt Rally 3's "Dark" track, as a Doom II car level
+
+- **Source:** the `vlc1-dark` track from Stunt Rally 3 (github.com/stuntrally/tracks3) by Crystal
+  Hammer and contributors, released under the **GNU GPL, version 3**. The heightmap, road spline,
+  scene file and licence are kept in [`src/vlc1-dark/`](src/vlc1-dark). No Stunt Rally textures or
+  sounds are included.
+- **Converted by** `tools/stuntrally2doom/stuntrally2doom.py`, then nodes built with
+  `tools/quake2doom/nodes.py`.
+- **Looks and gameplay** come from Freedoom: Phase 2 (BSD): Doom II textures and monsters.
+- Licence of this file: GPL-3.0-or-later, as a derivative of the GPL v3 track.
+
+What changes from Stunt Rally:
+- Doom floors are flat, so the track becomes a ribbon of small sectors along the road: the road, a
+  kerb, two bands of roadside ground and a cliff rim on each side. Slopes become small steps.
+- Bridges are raised road with a parapet over a drop. Ground below the track's water level is lava.
+- Roadside sectors are tagged 900; the engine's car mode gives them less grip.
+- The level sits in the MAP07 slot: when the last mancubus dies the gate before the finish line
+  sinks. Crossing the line ends the level; for now the game carries on into Freedoom's level 8.
+
+Rebuild (needs `pip install numpy shapely`):
+    python3 tools/stuntrally2doom/stuntrally2doom.py maps/src/vlc1-dark wreck.raw.wad
+    python3 tools/quake2doom/nodes.py wreck.raw.wad maps/wrecklight.wad
+
+## cars/*.rcar: Stunt Rally 3 cars for Wrecklight
+
+- **Ironhide** (`LK4.rcar`, by clarabox, import and interior by CryHam), **Quicksilver** (`XZ.rcar`,
+  by Neubi) and **Old Thunder** (`OT.rcar`, by irokrhus), from Stunt Rally 3's `data/cars`. All
+  **CC0 1.0**. Credits in `licenses/stuntrally-cars.txt`.
+- **Converted by** `tools/stuntrally-car/convert.py`, which reads Ogre-Next v2 meshes. Each `.rcar`
+  holds the body, interior, glass and wheel meshes, textures shrunk to 512 px, and wheel positions
+  from the car's `.car` physics file.
+
+Rebuild (needs `pip install pillow` and a checkout of stuntrally3):
+    python3 tools/stuntrally-car/convert.py path/to/stuntrally3/data maps/cars LK4 XZ OT
