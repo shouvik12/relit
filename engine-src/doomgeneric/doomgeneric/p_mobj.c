@@ -32,6 +32,7 @@
 #include "s_sound.h"
 
 #include "doomstat.h"
+#include "relit_car.h"
 
 
 void G_PlayerReborn (int player);
@@ -143,7 +144,8 @@ void P_XYMovement (mobj_t* mo)
 	
     do
     {
-	if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2)
+	if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2
+	    || (player && Car_Active() && (xmove < -MAXMOVE/2 || ymove < -MAXMOVE/2)))
 	{
 	    ptryx = mo->x + xmove/2;
 	    ptryy = mo->y + ymove/2;
@@ -198,6 +200,12 @@ void P_XYMovement (mobj_t* mo)
     if (mo->z > mo->floorz)
 	return;		// no friction when airborne
 
+    if (player && Car_Active() && player->playerstate == PST_LIVE)
+    {
+	Car_Friction (mo);	// Relit car mode: grip and drag
+	return;
+    }
+
     if (mo->flags & MF_CORPSE)
     {
 	// do not stop sliding
@@ -242,6 +250,14 @@ void P_ZMovement (mobj_t* mo)
     fixed_t	dist;
     fixed_t	delta;
     
+    // Relit car mode: wheels stay on the road down small steps
+    if (mo->player && Car_Active() && mo->momz <= 0
+	&& mo->z > mo->floorz && mo->z - mo->floorz <= 24*FRACUNIT)
+    {
+	mo->z = mo->floorz;
+	mo->momz = 0;
+    }
+
     // check for smooth step up
     if (mo->player && mo->z < mo->floorz)
     {

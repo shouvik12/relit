@@ -27,6 +27,7 @@
 #include "p_local.h"
 
 #include "doomstat.h"
+#include "relit_car.h"
 
 
 
@@ -143,6 +144,12 @@ void P_MovePlayer (player_t* player)
     ticcmd_t*		cmd;
 	
     cmd = &player->cmd;
+
+    if (Car_Active())
+    {
+	Car_Move (player);	// Relit car mode: drive instead of walking
+	return;
+    }
 	
     player->mo->angle += (cmd->angleturn<<16);
 
@@ -217,7 +224,8 @@ void P_DeathThink (player_t* player)
 	player->damagecount--;
 	
 
-    if (player->cmd.buttons & BT_USE)
+    if ((player->cmd.buttons & BT_USE)
+	|| (Car_Active() && (player->cmd.buttons & BT_ATTACK)))
 	player->playerstate = PST_REBORN;
 }
 
@@ -312,7 +320,9 @@ void P_PlayerThink (player_t* player)
     }
     
     // check for use
-    if (cmd->buttons & BT_USE)
+    if (Car_Active())
+	Car_Think (player);	// Relit car mode: the use button fires the rocket pods
+    else if (cmd->buttons & BT_USE)
     {
 	if (!player->usedown)
 	{

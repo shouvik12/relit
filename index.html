@@ -20,6 +20,7 @@ button{font:inherit}
 #fb{object-fit:contain;image-rendering:pixelated;background:#000;display:none}
 .view-fb #gl,.view-fb #weapon,.view-fb .hud,.view-fb .cross{display:none}
 .view-fb #fb{display:block}
+.driving .cross,.driving #weapon,.driving .hint{display:none}
 
 /* start screen */
 #start{position:fixed;inset:0;z-index:20;display:flex;overflow-y:auto;padding:24px 16px;
@@ -167,6 +168,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
       <label><input type="radio" name="level" value="campaign" checked><span>Freedoom campaign</span></label>
       <label><input type="radio" name="level" value="slipgate"><span>Quake: Episode 1, Dimension of the Doomed</span></label>
       <label><input type="radio" name="level" value="arena"><span>OpenArena: The Other Side</span></label>
+      <label><input type="radio" name="level" value="wreck"><span>Wrecklight: car combat</span></label>
     </div>
     <div class="skills maps" id="quakemaps" role="radiogroup" aria-label="Quake level" hidden>
       <label><input type="radio" name="qmap" value="1" checked><span>1 · The Slipgate Complex</span></label>
@@ -178,7 +180,14 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
       <label><input type="radio" name="qmap" value="7"><span>7 · The Door to Chthon</span></label>
       <label><input type="radio" name="qmap" value="8"><span>8 · The House of Chthon</span></label>
     </div>
+    <div class="skills maps" id="carpick" role="radiogroup" aria-label="Car" hidden>
+      <label><input type="radio" name="car" value="LK4" checked><span>Ironhide · off-roader</span></label>
+      <label><input type="radio" name="car" value="XZ"><span>Quicksilver · race car</span></label>
+      <label><input type="radio" name="car" value="OT"><span>Old Thunder · 1940s truck</span></label>
+      <label><input type="radio" name="car" value="rammer"><span>Rammer · Relit's own</span></label>
+    </div>
     <p class="small levelnote" id="arenanote" hidden>OpenArena's "The Other Side" (GPL map by Jan Groothuijse), rebuilt as a Doom II arena: chaingunners, revenants, mancubi, arachnotrons and arch-viles, with a super shotgun and plenty of shells. Plays with the built-in Freedoom: Phase 2.</p>
+    <p class="small levelnote" id="wrecknote" hidden>Drive an armed car through a night lap of Stunt Rally's volcanic "Dark" track (GPL, by Crystal Hammer and contributors), rebuilt as a Doom II level and packed with Doom's monsters. Three of the cars come from Stunt Rally 3 (CC0). Ram them, shoot them, and wreck every mancubus to open the gate before the finish line. Plays with the built-in Freedoom: Phase 2.</p>
     <p class="small levelnote" id="levelnote" hidden>All eight levels of Quake's first episode, from the Slipgate Complex to the House of Chthon, rebuilt as Doom maps from John Romero's GPL map source, with Doom's monsters, weapons and textures. </p>
     <div class="actions">
       <button class="play" id="play">Play</button>
@@ -186,8 +195,9 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--line);border-b
       <p class="small pickhelp">Plays <a href="https://freedoom.github.io" target="_blank" rel="noopener">Freedoom</a>, built in. Own the original? <button class="link" id="pick" type="button">Use your own doom.wad</button> or drop it here. It never leaves your computer.</p>
     </div>
     <div id="load" hidden><div class="bar"><i id="barfill"></i></div><p class="small" id="loadmsg">Loading…</p></div>
-    <p class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse to look · click or <kbd>Ctrl</kbd> fire · <kbd>Space</kbd> use · <kbd>1</kbd>–<kbd>7</kbd> weapons · <kbd>L</kbd> flashlight · <kbd>V</kbd> 1993 view · <kbd>Esc</kbd> menu</p>
-    <p class="small">Relit is free software under the GPL-2.0-or-later. Source code: <a href="https://github.com/shouvik12/relit" target="_blank" rel="noopener">github.com/shouvik12/relit</a>. Engine: <a href="https://github.com/ozkl/doomgeneric" target="_blank" rel="noopener">doomgeneric</a>, from id Software's GPL source, with OPL music code from DOSBox and Chocolate Doom. Game content: <a href="https://freedoom.github.io" target="_blank" rel="noopener">Freedoom</a> (BSD). Texture upscaling: Real-ESRGAN (BSD-3-Clause). Not affiliated with id Software, Bethesda or ZeniMax.</p>
+    <p class="keys" id="carkeys" hidden><kbd>W</kbd> or <kbd>↑</kbd> gas · <kbd>S</kbd> or <kbd>↓</kbd> brake and reverse · <kbd>A</kbd><kbd>D</kbd> or <kbd>←</kbd><kbd>→</kbd> steer, even when stopped · mouse to look around · <kbd>C</kbd> camera · <kbd>Space</kbd> roof gun · <kbd>F</kbd> or <kbd>Shift</kbd> rockets · <kbd>L</kbd> headlights · <kbd>R</kbd> back on the road · <kbd>V</kbd> 1993 view · <kbd>Esc</kbd> menu</p>
+    <p class="keys" id="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · mouse to look · click or <kbd>Ctrl</kbd> fire · <kbd>Space</kbd> use · <kbd>1</kbd>–<kbd>7</kbd> weapons · <kbd>L</kbd> flashlight · <kbd>V</kbd> 1993 view · <kbd>Esc</kbd> menu</p>
+    <p class="small">Relit is free software under the GPL-2.0-or-later. Source code: <a href="https://github.com/shouvik12/relit" target="_blank" rel="noopener">github.com/shouvik12/relit</a>. Engine: <a href="https://github.com/ozkl/doomgeneric" target="_blank" rel="noopener">doomgeneric</a>, from id Software's GPL source, with OPL music code from DOSBox and Chocolate Doom. Game content: <a href="https://freedoom.github.io" target="_blank" rel="noopener">Freedoom</a> (BSD). Wrecklight's track: <a href="https://github.com/stuntrally/tracks3" target="_blank" rel="noopener">Stunt Rally 3</a> (GPL-3.0). Texture upscaling: Real-ESRGAN (BSD-3-Clause). Not affiliated with id Software, Bethesda or ZeniMax.</p>
   </div>
 </div>
 

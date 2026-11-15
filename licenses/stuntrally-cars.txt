@@ -1,0 +1,12 @@
+Wrecklight's driveable cars Ironhide, Quicksilver and Old Thunder come from
+Stunt Rally 3 (https://github.com/stuntrally/stuntrally3), converted to
+maps/cars/*.rcar by tools/stuntrally-car. Relit adds the roof gun, rocket
+pods, ram bars and lamps.
+
+  maps/cars/LK4.rcar  "LK4"  by clarabox (blendswap.com/blends/view/18708),
+                      import, settings and interior by CryHam. CC0 1.0.
+  maps/cars/XZ.rcar   "XZ"   by Neubi. CC0 1.0.
+  maps/cars/OT.rcar   "OT"   by irokrhus. CC0 1.0.
+
+CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/
+No attribution is required; it is given here as thanks.

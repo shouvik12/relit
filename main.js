@@ -42,6 +42,23 @@ async function arenaBytes() {
   throw new Error('Could not load the arena (maps/arena.wad)');
 }
 
+// Wrecklight: a Stunt Rally track rebuilt as a Doom II level, driven in car mode.
+// Stunt Rally 3 cars, converted by tools/stuntrally-car (null = Relit's own blocky car)
+async function carModelBytes(id) {
+  if (!id || id === 'rammer') return null;
+  const packed = window.RELIT_CARS?.[id];
+  if (packed) return gunzip(b64(packed));
+  const r = await fetch('maps/cars/' + id + '.rcar');
+  if (r.ok) return new Uint8Array(await r.arrayBuffer());
+  return null; // fall back to the blocky car rather than fail
+}
+async function wreckBytes() {
+  if (window.RELIT_WRECK) return gunzip(b64(window.RELIT_WRECK));
+  const r = await fetch('maps/wrecklight.wad');
+  if (r.ok) return new Uint8Array(await r.arrayBuffer());
+  throw new Error('Could not load Wrecklight (maps/wrecklight.wad)');
+}
+
 async function engineBytes() {
   if (window.RELIT_WASM) {
     const bin = atob(window.RELIT_WASM), out = new Uint8Array(bin.length);
@@ -136,6 +153,8 @@ const levelNote = () => {
   const quake = document.querySelector('input[name=level]:checked').value === 'slipgate';
   $('levelnote').hidden = !quake; $('quakemaps').hidden = !quake;
   $('arenanote').hidden = document.querySelector('input[name=level]:checked').value !== 'arena';
+  const wreck = document.querySelector('input[name=level]:checked').value === 'wreck';
+  $('wrecknote').hidden = !wreck; $('carpick').hidden = !wreck; $('keys').hidden = wreck; $('carkeys').hidden = !wreck;
 };
 document.querySelectorAll('input[name=level]').forEach((r) => r.addEventListener('change', levelNote));
 
@@ -178,11 +197,21 @@ async function start(name, wadBytes) {
       const theme = lumpData(wadBytes, 'D_RUNNIN');
       if (theme) wadBytes = appendPwad(wadBytes, aliasPwad(theme, ['D_SHAWN']));
     }
+    if (level === 'wreck') {
+      if (!hasLump(wadBytes, 'MAP01')) throw new Error('Wrecklight needs a Doom II-style file such as freedoom2.wad or doom2.wad, for its monsters');
+      $('loadmsg').textContent = 'Starting the engine…';
+      wadBytes = appendPwad(wadBytes, await wreckBytes());
+      map = 7; // Doom II's MAP07: the gate opens when the last mancubus dies
+      const theme = lumpData(wadBytes, 'D_RUNNIN');
+      if (theme) wadBytes = appendPwad(wadBytes, aliasPwad(theme, ['D_SHAWN']));
+    }
     const wasmBytes = await engineBytes();
     const ai = await aiBytes();
     await run({
       stage, canvas: $('gl'), weaponCanvas: $('weapon'), fbCanvas: $('fb'),
-      wasmBytes, wadBytes, skill, map, aiBytes: ai, noAO: /[?&]noao\b/.test(location.search),
+      wasmBytes, wadBytes, skill, map, aiBytes: ai, car: level === 'wreck',
+      carModel: level === 'wreck' ? await carModelBytes(document.querySelector('input[name=car]:checked')?.value) : null,
+      onDrive: (on) => { document.body.classList.toggle('driving', on); $('torch').textContent = on ? 'Headlights' : 'Flashlight'; }, noAO: /[?&]noao\b/.test(location.search),
       onAI: (done, total) => {
         const el = $('aistat');
         el.textContent = `AI remastering art · ${done} / ${total}`;
@@ -209,6 +238,16 @@ async function start(name, wadBytes) {
           amEl.querySelector('b').textContent = ammo; amEl.classList.toggle('low', P[9] >= 0 && P[9] < 10);
           $('kb').classList.toggle('on', !!P[24]); $('ky').classList.toggle('on', !!P[25]); $('kr').classList.toggle('on', !!P[26]);
         }
+        if (level === 'wreck' && document.body.classList.contains('driving')) {
+          const left = P[45] | 0, rockets = P[37] | 0, kmh = Math.round(P[46] * 35 / 24 * 3.6), fk = `${left}|${rockets}|${kmh}`;
+          if (fk !== hud.foes) {
+            hud.foes = fk; const el = $('foes'); el.hidden = false;
+            el.textContent = (left ? `Mancubi left: ${left}` : 'Gate open: cross the finish line') + ` · Rockets ${rockets} · ${kmh} km/h`;
+            el.classList.toggle('done', !left);
+          }
+          if (!hud.told) { hud.told = true; msgEl.textContent = 'Wreck every mancubus to open the gate before the finish line. Space fires the roof gun, F the rockets.'; msgEl.style.opacity = 1; hud.toldAt = performance.now(); }
+          if (performance.now() - hud.toldAt < 9000) return;
+        } else if (level === 'wreck') { $('foes').hidden = true; hud.foes = ''; }
         if (level === 'arena') {
           const left = Math.max(0, (P[28] | 0) - (P[27] | 0)), fk = left + '|' + (P[28] | 0);
           if (fk !== hud.foes) {
@@ -252,6 +291,6 @@ $('exit').addEventListener('click', () => location.reload());
 // one-click play with the built-in Freedoom
 $('play').addEventListener('click', async () => {
   $('load').hidden = false; $('loadmsg').textContent = 'Loading Freedoom…';
-  const arena = document.querySelector('input[name=level]:checked').value === 'arena';
+  const arena = ['arena', 'wreck'].includes(document.querySelector('input[name=level]:checked').value);
   try { start(arena ? 'freedoom2.wad' : 'freedoom1.wad', await (arena ? freedoom2Bytes : freedoomBytes)()); } catch (err) { showError(err.message + '.'); }
 });

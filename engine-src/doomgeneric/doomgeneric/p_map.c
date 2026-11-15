@@ -35,6 +35,7 @@
 
 // State.
 #include "doomstat.h"
+#include "relit_car.h"
 #include "r_state.h"
 // Data.
 #include "sounds.h"
@@ -294,6 +295,10 @@ boolean PIT_CheckThing (mobj_t* thing)
     if (thing == tmthing)
 	return true;
     
+    // Relit car mode: driving into something hurts it
+    if (tmthing->player && (thing->flags & MF_SHOOTABLE) && Car_Active())
+	Car_Ram (tmthing, thing);
+
     // check for skulls slamming into things
     if (tmthing->flags & MF_SKULLFLY)
     {

@@ -23,6 +23,7 @@
 #include "p_local.h"
 #include "r_state.h"
 #include "w_wad.h"
+#include "relit_car.h"
 
 #define EXPORT(name) __attribute__((export_name(name)))
 
@@ -182,6 +183,18 @@ EXPORT("dgx_player") float *dgx_player(void)
     pl[42] = p->powers[pw_invisibility];
     pl[43] = p->powers[pw_strength];
     pl[44] = (p->mo->subsector) ? (float)(p->mo->subsector->sector - sectors) : 0;
+    if (Car_Active()) {
+        /* car mode: mancubi still standing (they hold the exit shut), speed, wheels on the ground */
+        int fat = 0;
+        for (thinker_t *th = thinkercap.next; th != &thinkercap; th = th->next) {
+            if (th->function.acp1 != (actionf_p1)P_MobjThinker) continue;
+            mobj_t *m = (mobj_t *)th;
+            if (m->type == MT_FATSO && m->health > 0) fat++;
+        }
+        pl[45] = fat;
+        pl[46] = FX(P_AproxDistance(p->mo->momx, p->mo->momy));
+        pl[47] = 1 + (p->mo->z <= p->mo->floorz);
+    }
     return pl;
 }
 

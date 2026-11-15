@@ -156,9 +156,12 @@ def blockmap(verts, lines):
                     continue
                 cells[cy * cols + cx].append(li)
     out = [struct.pack('<hhHH', ox, oy, cols, rows)]
-    body, offs, at = [], [], 4 + cols * rows
+    body, offs, at, seen = [], [], 4 + cols * rows, {}
     for c in cells:
-        offs.append(at)
+        key = tuple(c)
+        if key in seen:              # blocks with the same lines (mostly empty ones) share one list
+            offs.append(seen[key]); continue
+        seen[key] = at; offs.append(at)
         body.append(struct.pack('<%dH' % (len(c) + 2), 0, *c, 0xFFFF))
         at += len(c) + 2
     if at > 0xFFFF:

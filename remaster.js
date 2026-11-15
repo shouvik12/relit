@@ -9,6 +9,7 @@ import {
 import { Upscaler, Remaster, wadFingerprint } from './ai.js';
 import { GameAudio } from './audio.js';
 import { Effects } from './effects.js';
+import { Car } from './car.js';
 
 const TIC_MS = 1000 / 35;
 const FF_FULLBRIGHT = 0x8000, FF_FRAMEMASK = 0x7fff;
@@ -570,7 +571,7 @@ function buildWalls(lv, assets, H, sideTex, layer) {
 
 // ---------------------------------------------------------------- engine
 
-async function startEngine(wasmBytes, wadBytes, epi, map, skill, commercial, relitImports) {
+async function startEngine(wasmBytes, wadBytes, epi, map, skill, commercial, relitImports, carMap) {
   let log = [];
   const fds = [new OpenFile(new File([])),
     ConsoleStdout.lineBuffered((m) => { log.push(m); if (log.length > 60) log.shift(); }),
@@ -581,6 +582,7 @@ async function startEngine(wasmBytes, wadBytes, epi, map, skill, commercial, rel
   const { instance } = await WebAssembly.instantiate(wasmBytes, { wasi_snapshot_preview1: wasi.wasiImport, relit: relitImports });
   wasi.initialize(instance);
   const e = instance.exports;
+  if (carMap) e.dgx_car(1, carMap); // car mode: the player drives on this one map
   e.dgx_start(epi, map, skill, commercial ? 1 : 0);
   const mem = () => e.memory.buffer;
   const str = (p) => { const b = new Uint8Array(mem(), p, Math.min(128, mem().byteLength - p)); let s = ''; for (const c of b) { if (!c) break; s += String.fromCharCode(c); } return s; };
@@ -624,6 +626,17 @@ function doomKey(ev) {
   return 0;
 }
 
+// Car mode: A and D steer, Space is the roof gun, F or Shift the rocket pods.
+function carKey(ev) {
+  switch (ev.code) {
+    case 'KeyA': case 'ArrowLeft': return KEY.left;
+    case 'KeyD': case 'ArrowRight': return KEY.right;
+    case 'Space': case 'ControlLeft': case 'ControlRight': return KEY.fire;
+    case 'KeyF': case 'KeyE': case 'ShiftLeft': case 'ShiftRight': return KEY.use;
+  }
+  return 0;
+}
+
 export async function run(opts) {
   const { canvas, fbCanvas, hud, status, onProgress } = opts;
 
@@ -649,7 +662,8 @@ export async function run(opts) {
   }
   onProgress('Starting the engine…', 0.8);
   const audio = new GameAudio(wad);
-  const eng = await startEngine(opts.wasmBytes, wadBytes, 1, opts.map || 1, opts.skill, commercial, audio.imports());
+  const carMap = opts.car && commercial ? (opts.map || 1) : 0;
+  const eng = await startEngine(opts.wasmBytes, wadBytes, 1, opts.map || 1, opts.skill, commercial, audio.imports(), carMap);
 
   // --- three.js setup
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -736,6 +750,11 @@ export async function run(opts) {
   scene.add(torch, torch.target);
   let torchOn = true;
   const effects = new Effects(scene, coarse);
+  // car mode: on the car level the player's body is a car, seen from a chase camera
+  const car = carMap ? new Car(scene, audio, opts.carModel) : null;
+  const driving = () => !!car && !!cur && cur.inLevel && cur.info[2] === carMap;
+  const setTorch = (on) => { torchOn = on; opts.onTorch?.(torchOn); if (car) eng.e.dgx_car_lights(on ? 1 : 0); };
+  let wasDriving = false, baseFov = 72;
 
   // sky: a cylinder around the camera, wrapped with the level's sky texture
   let skyMesh = null;
@@ -826,8 +845,14 @@ export async function run(opts) {
   const keyEvent = (down, k) => { if (k) eng.e.dgx_key(down ? 1 : 0, k); };
   const onKey = (down) => (ev) => {
     if (ev.code === 'KeyV' && down && !ev.repeat) { toggleMode(); ev.preventDefault(); return; }
-    if (ev.code === 'KeyL' && down && !ev.repeat) { torchOn = !torchOn; opts.onTorch?.(torchOn); ev.preventDefault(); return; }
-    const k = doomKey(ev); if (!k) return;
+    if (ev.code === 'KeyL' && down && !ev.repeat) { setTorch(!torchOn); ev.preventDefault(); return; }
+    const drive = driving();
+    if (drive && ev.code === 'KeyC') { if (down && !ev.repeat) car.nextView(); ev.preventDefault(); return; }
+    if (drive && ev.code === 'KeyR') { if (down && !ev.repeat) eng.e.dgx_car_reset(); ev.preventDefault(); return; }
+    // In the car the arrow keys act exactly like W A S D (same keys sent to the engine)
+    const alias = drive && { ArrowUp: 'KeyW', ArrowDown: 'KeyS', ArrowLeft: 'KeyA', ArrowRight: 'KeyD' }[ev.code];
+    if (alias) { const o = ev; ev = { code: alias, key: alias.slice(3).toLowerCase(), repeat: o.repeat, preventDefault: () => o.preventDefault() }; }
+    const k = (drive && carKey(ev)) || doomKey(ev); if (!k) return;
     ev.preventDefault();
     if (down) { if (held.has(k)) return; held.add(k); } else held.delete(k);
     keyEvent(down, k);
@@ -835,8 +860,8 @@ export async function run(opts) {
     // so cheat codes like IDDQD and IDKFA can be typed. Unbound letters do nothing in play.
     if (/^Key[A-Z]$/.test(ev.code) && k !== ev.code.slice(3).toLowerCase().charCodeAt(0)) keyEvent(down, ev.code.slice(3).toLowerCase().charCodeAt(0));
   };
-  addEventListener('keydown', onKey(true));
-  addEventListener('keyup', onKey(false));
+  addEventListener('keydown', onKey(true), true);
+  addEventListener('keyup', onKey(false), true);
   addEventListener('blur', () => { for (const k of held) keyEvent(false, k); held.clear(); });
 
   let mouseDx = 0, mouseButtons = 0;
@@ -845,6 +870,7 @@ export async function run(opts) {
   document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === stage; opts.onLock?.(locked); });
   addEventListener('mousemove', (ev) => {
     if (!locked) return;
+    if (driving()) { car.look(ev.movementX, ev.movementY); return; } // the car is steered with the keys; the mouse looks around
     mouseDx += ev.movementX;
     pitch = Math.max(-1.1, Math.min(1.1, pitch - ev.movementY * 0.0022));
   });
@@ -938,7 +964,7 @@ export async function run(opts) {
     renderer.setSize(r.width, r.height, false); composer.setSize(r.width, r.height);
     grade.uniforms.uTexel.value.set(1 / (r.width * renderer.getPixelRatio()), 1 / (r.height * renderer.getPixelRatio()));
     camera.aspect = r.width / r.height;
-    camera.fov = camera.aspect < 1 ? 85 : 72;
+    camera.fov = baseFov = camera.aspect < 1 ? 85 : 72;
     camera.updateProjectionMatrix();
     aoCamera.fov = camera.fov; aoCamera.aspect = camera.aspect; aoCamera.updateProjectionMatrix();
     effects.setScale((r.height * renderer.getPixelRatio()) / 2 / Math.tan((camera.fov * Math.PI) / 360));
@@ -1041,18 +1067,36 @@ export async function run(opts) {
     lastFlash = flashNow; kick = Math.max(0, kick - dt * 7);
     if (P[10] > lastDamage) effects.shake = Math.max(effects.shake, 0.3);
     lastDamage = P[10];
-    camera.rotation.x += kick * 0.014;
+    // car mode: draw the car where the player is and move the camera behind it
+    let vx = cx, vy = cy, vAng = ang, carState = null;
+    const drive = driving();
+    if (car) {
+      car.group.visible = drive;
+      if (drive !== wasDriving) { wasDriving = drive; opts.onDrive?.(drive); if (!drive) { car.quiet(); torch.angle = 0.72; torch.distance = 1400; } }
+      if (drive) {
+        carState = { x: cx, y: cy, z: lerp(Pp[2], P[2], t), ang, speed: lerp(Pp[46], P[46], t), flash: flashNow, dead: P[33] !== 0, lights: torchOn,
+          gas: held.has(KEY.up) };
+        const view = car.update(dt, carState, camera);
+        vx = view.x; vy = view.y; vAng = view.ang;
+      }
+      const fov = drive ? baseFov + Math.min(16, P[46] * 0.55) : baseFov;
+      if (Math.abs(fov - camera.fov) > 0.15) {
+        camera.fov += (fov - camera.fov) * Math.min(1, dt * 5); camera.updateProjectionMatrix();
+        aoCamera.fov = camera.fov; aoCamera.updateProjectionMatrix();
+      }
+    }
+    camera.rotation.x += kick * (drive ? 0.004 : 0.014);
     if (effects.shake > 0) {
       const sh = effects.shake;
       camera.rotation.x += (Math.random() - 0.5) * sh * 0.03; camera.rotation.y += (Math.random() - 0.5) * sh * 0.03;
       camera.position.x += (Math.random() - 0.5) * sh * 3; camera.position.y += (Math.random() - 0.5) * sh * 3;
     }
-    if (skyMesh) skyMesh.position.set(cx, cz, -cy);
+    if (skyMesh) skyMesh.position.copy(camera.position);
 
     // --- things
     const emitters = [];
     const seen = new Set();
-    const yaw = ang - Math.PI / 2;
+    const yaw = vAng - Math.PI / 2;
     const rx = Math.cos(yaw), rz = -Math.sin(yaw); // camera right, three.js space
     for (const [id, th] of cur.things) {
       const pv = prev.things?.get(id);
@@ -1064,7 +1108,7 @@ export async function run(opts) {
       const name = eng.sprnames[th[5]], table = assets.spriteTable(name);
       const fr = table[th[6] & FF_FRAMEMASK]; if (!fr) continue;
       const tang = (th[4] >>> 0) * (Math.PI * 2 / 4294967296);
-      const a = Math.atan2(y - cy, x - cx);
+      const a = Math.atan2(y - vy, x - vx);
       let rot = Math.floor((((a - tang + Math.PI * 9 / 8) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI / 4)) & 7;
       const pick = fr[rot] || fr[0]; if (!pick) continue;
       const sp = assets.sprite(pick.lump);
@@ -1118,6 +1162,7 @@ export async function run(opts) {
     torch.position.copy(camera.position).addScaledVector(right, 7).y -= 7;
     torch.target.position.copy(camera.position).addScaledVector(fwd, 200).y -= 18; // aimed a touch low, like a held light
     torch.target.updateMatrixWorld();
+    if (carState) car.aimLights(torch, torchOn, carState); // headlights
     aoCamera.position.copy(camera.position); aoCamera.quaternion.copy(camera.quaternion); aoCamera.updateMatrixWorld();
     effects.update(dt, cur.things, eng.sprnames, camera.position, { position: torch.position, dir: fwd, on: torchOn }, here, tt);
     if (skyMesh) skyMesh.material.color.setScalar(0.73);
@@ -1139,7 +1184,7 @@ export async function run(opts) {
     wctx.clearRect(0, 0, W, Hh);
     const scale = Hh / 200, x0 = (W - 320 * scale) / 2;
     const wlight = Math.min(1.4, 0.35 + here * 1.6 + (flash ? 0.6 : 0));
-    for (let k = 0; k < 2; k++) {
+    for (let k = 0; k < 2 && !drive; k++) { // no first-person gun when driving
       const spr = P[13 + k * 4]; if (spr < 0) continue;
       const frm = P[14 + k * 4];
       const fr = assets.spriteTable(eng.sprnames[spr])[frm & FF_FRAMEMASK]; if (!fr || !fr[0]) continue;
@@ -1150,7 +1195,7 @@ export async function run(opts) {
       wctx.drawImage(sp.getCanvas(), x0 + (sx - sp.left + ox) * scale, (sy - sp.top + oy) * scale, sp.w * scale, sp.h * scale);
     }
     wctx.filter = 'none';
-    if (P[17] >= 0) {
+    if (P[17] >= 0 && !drive) {
       // muzzle glow over the weapon
       const gx = x0 + (160 - swayX * 14) * scale, gy = Hh * 0.6, gr = 80 * scale;
       const g = wctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
@@ -1164,6 +1209,6 @@ export async function run(opts) {
   };
   window.__relitDebug = { audio, eng, scene, camera, THREE, sprname: (id) => { const th = cur?.things?.get(id); return th ? eng.sprnames[th[5]] + ' type ' + th[10] + ' z ' + th[3] / 65536 : null; } }; // used by automated tests
   requestAnimationFrame(frame);
-  opts.torchButton?.addEventListener('click', (ev) => { ev.stopPropagation(); torchOn = !torchOn; opts.onTorch?.(torchOn); });
+  opts.torchButton?.addEventListener('click', (ev) => { ev.stopPropagation(); setTorch(!torchOn); });
   return { toggleMode };
 }

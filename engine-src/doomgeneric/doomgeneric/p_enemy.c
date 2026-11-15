@@ -33,6 +33,7 @@
 
 // State.
 #include "doomstat.h"
+#include "relit_car.h"
 #include "r_state.h"
 
 // Data.
@@ -516,6 +517,12 @@ P_LookForPlayers
 
 	if (!P_CheckSight (actor, player->mo))
 	    continue;		// out of sight
+
+	// Relit car mode: with the headlights off, the car is only seen up close
+	if (relit_car_dark && Car_Active()
+	    && P_AproxDistance (player->mo->x - actor->x,
+				player->mo->y - actor->y) > 640*FRACUNIT)
+	    continue;
 			
 	if (!allaround)
 	{
