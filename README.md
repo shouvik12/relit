@@ -8,6 +8,8 @@ Relit keeps Doom's original engine running the game, every rule, monster and doo
 
 <p align="center"><sub>The same doorway, same moment, zoomed in. Left: the 1993 renderer. Right: Relit. One key flips between them.</sub></p>
 
+> 🆕 **New: Snow Mountain, a SuperTuxKart race track turned into a frozen tunnel full of demons.** Pick it on the start screen.
+
 > 🆕 **New: Wrecklight, car combat on Doom's engine. Pick a car, arm it with a roof gun and rockets, and race a lava track full of demons.** [See Wrecklight ↓](#bonus-level-wrecklight-car-combat)
 >
 > 🆕 **New: play all eight levels of Quake's first episode on Doom's 1993 engine, from the Slipgate Complex to Chthon.** [See the Quake episode ↓](#bonus-episode-quake-episode-1)
@@ -22,7 +24,7 @@ Everything you need is in this repo, including a free game to play.
 
 1. **Get it:** `git clone https://github.com/shouvik12/relit.git`, or click **Code → Download ZIP** and unzip it.
 2. **Open `relit.html`** with a double-click. It runs straight from your disk: no install, no server, no account.
-3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 8), **OpenArena: The Other Side** or **Wrecklight: car combat** (then a car). Freedoom is built in, so there's no file to find.
+3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 8), **OpenArena: The Other Side**, **Wrecklight: car combat** (then a car) or **Snow Mountain: frozen tunnel**. Freedoom is built in, so there's no file to find.
 
 ```
 relit/
@@ -79,6 +81,7 @@ In Wrecklight you drive instead; its keys are [listed below](#bonus-level-wreckl
 | **Doom II** (`doom2.wad`) | Your own copy (Steam, GOG) | ✅ Tested |
 | **Quake: Episode 1** (all 8 levels) | Built in; pick it on the start screen | ✅ Ready to play |
 | **OpenArena: The Other Side** (bonus arena) | Built in; pick it on the start screen | ✅ Ready to play |
+| **Snow Mountain: frozen tunnel** (bonus level) | Built in; pick it on the start screen | ✅ Ready to play |
 | **Wrecklight** (car combat) | Built in; pick it on the start screen | 🧪 New, still being tuned |
 
 Own the original games? Pick your `doom.wad` or `doom2.wad` and play id Software's original levels with Relit's new look. Your file stays on your machine.

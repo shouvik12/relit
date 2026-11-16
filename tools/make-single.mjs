@@ -19,14 +19,14 @@ const quakeFile = ['quake-e1.wad', 'slipgate.wad'].map((f) => path.join(root, 'm
 const freedoom = zlib.gzipSync(fs.readFileSync(path.join(root, 'game', 'freedoom1.wad')), { level: 9 }).toString('base64');
 const slipgate = zlib.gzipSync(fs.readFileSync(quakeFile), { level: 9 }).toString('base64');
 const gz = (f) => zlib.gzipSync(fs.readFileSync(path.join(root, f)), { level: 9 }).toString('base64');
-const arena = gz('maps/arena.wad'), freedoom2 = gz('game/freedoom2.wad'), wreck = gz('maps/wrecklight.wad');
+const arena = gz('maps/arena.wad'), freedoom2 = gz('game/freedoom2.wad'), wreck = gz('maps/wrecklight.wad'), snow = gz('maps/snowmountain.wad');
 const carDir = path.join(root, 'maps', 'cars');
 const cars = JSON.stringify(Object.fromEntries((fs.existsSync(carDir) ? fs.readdirSync(carDir) : []).filter((f) => f.endsWith('.rcar'))
   .map((f) => [f.slice(0, -5), gz('maps/cars/' + f)])));
 let html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const tag = '<script type="module" src="main.js"></script>';
 if (!html.includes(tag)) throw new Error('script tag not found in index.html');
-html = html.replace(tag, () => `<script>window.RELIT_WASM="${wasm}";window.RELIT_AI="${ai}";window.RELIT_SLIPGATE="${slipgate}";window.RELIT_FREEDOOM="${freedoom}";window.RELIT_ARENA="${arena}";window.RELIT_FREEDOOM2="${freedoom2}";window.RELIT_WRECK="${wreck}";window.RELIT_CARS=${cars};</script>\n<script>${js}</script>`);
+html = html.replace(tag, () => `<script>window.RELIT_WASM="${wasm}";window.RELIT_AI="${ai}";window.RELIT_SLIPGATE="${slipgate}";window.RELIT_FREEDOOM="${freedoom}";window.RELIT_ARENA="${arena}";window.RELIT_FREEDOOM2="${freedoom2}";window.RELIT_WRECK="${wreck}";window.RELIT_SNOW="${snow}";window.RELIT_CARS=${cars};</script>\n<script>${js}</script>`);
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(root, 'dist', 'relit.html'), html);
 console.log('dist/relit.html', (html.length / 1024 / 1024).toFixed(2), 'MB');

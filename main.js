@@ -35,6 +35,12 @@ async function freedoom2Bytes() {
   }
   throw new Error('Could not load the built-in Freedoom: Phase 2 (game/freedoom2.wad)');
 }
+async function snowBytes() {
+  if (window.RELIT_SNOW) return gunzip(b64(window.RELIT_SNOW));
+  const r = await fetch('maps/snowmountain.wad');
+  if (r.ok) return new Uint8Array(await r.arrayBuffer());
+  throw new Error('Could not load Snow Mountain (maps/snowmountain.wad)');
+}
 async function arenaBytes() {
   if (window.RELIT_ARENA) return gunzip(b64(window.RELIT_ARENA));
   const r = await fetch('maps/arena.wad');
@@ -196,6 +202,11 @@ async function start(name, wadBytes) {
       // same as the Quake levels: the campaign's opening track (MAP01's) plays in the arena
       const theme = lumpData(wadBytes, 'D_RUNNIN');
       if (theme) wadBytes = appendPwad(wadBytes, aliasPwad(theme, ['D_SHAWN']));
+    }
+    if (level === 'snow') {
+      if (!hasLump(wadBytes, 'E1M1')) throw new Error('Snow Mountain needs a Doom 1-style file such as freedoom1.wad, not a Doom II one');
+      $('loadmsg').textContent = 'Heading into the mountain…';
+      wadBytes = appendPwad(wadBytes, await snowBytes());
     }
     if (level === 'wreck') {
       if (!hasLump(wadBytes, 'MAP01')) throw new Error('Wrecklight needs a Doom II-style file such as freedoom2.wad or doom2.wad, for its monsters');

@@ -118,3 +118,23 @@ Rebuild (needs `pip install numpy shapely`):
 
 Rebuild (needs `pip install pillow` and a checkout of stuntrally3):
     python3 tools/stuntrally-car/convert.py path/to/stuntrally3/data maps/cars LK4 XZ OT
+
+## snowmountain.wad: Snow Mountain, a frozen tunnel
+
+- **Source:** the driveline (`quads.xml`) of **Snow Mountain** from SuperTuxKart's track assets.
+  Track by Canis Lupus, converted to SuperTuxKart by sj04736, released under **GPL and CC BY-SA**
+  (full notice in `licenses/supertuxkart-snowmountain.txt`).
+- **Only the road's shape is used.** The driveline lists the drivable surface as a chain of
+  four-cornered patches with heights; no SuperTuxKart textures, models, sounds or music are included.
+- **Licence of this file:** GPL-3.0-or-later and CC BY-SA, as a derivative of the track.
+
+What changes from SuperTuxKart:
+- The first 106 of the track's 168 patches are used, stopping before the road crosses over itself
+  (Doom can't stack one road above another).
+- Each patch becomes a sector at that height, squashed so no step is higher than 16 units.
+- The road is enclosed as a low frozen tunnel, walled off at the start, with an exit switch at the end.
+- Freedoom monsters (93, tougher further in), weapons, ammo, health and Doom 1 gore line the route.
+
+Rebuild (needs `pip install numpy shapely` and SuperTuxKart's `tracks/snowmountain/quads.xml`):
+    python3 tools/stk2doom/stk2doom.py path/to/snowmountain/quads.xml snow E1M1
+    zdbsp -o maps/snowmountain.wad snow.raw.wad
