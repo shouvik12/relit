@@ -8,10 +8,10 @@ Relit keeps Doom's original engine running the game, every rule, monster and doo
 
 <p align="center"><sub>The same doorway, same moment, zoomed in. Left: the 1993 renderer. Right: Relit. One key flips between them.</sub></p>
 
-> 🆕 **New: Abuse (1995) level 1, the classic side-scroller's base rebuilt in Doom, wearing Abuse's own wall art.** Pick it on the start screen.
-
-> 🆕 **New: Snow Mountain, a SuperTuxKart race track turned into a frozen tunnel full of demons.** Pick it on the start screen.
-
+> 🆕 **New: Abuse (1995) level 1, the classic side-scroller's alien base rebuilt in first person, wearing Abuse's own wall art.** [See Abuse ↓](#bonus-level-abuse-1995-level-1)
+>
+> 🆕 **New: Snow Mountain, a SuperTuxKart race track turned into a frozen tunnel full of demons.** [See Snow Mountain ↓](#bonus-level-snow-mountain-frozen-tunnel)
+>
 > 🆕 **New: Wrecklight, car combat on Doom's engine. Pick a car, arm it with a roof gun and rockets, and race a lava track full of demons.** [See Wrecklight ↓](#bonus-level-wrecklight-car-combat)
 >
 > 🆕 **New: play all eight levels of Quake's first episode on Doom's 1993 engine, from the Slipgate Complex to Chthon.** [See the Quake episode ↓](#bonus-episode-quake-episode-1)
@@ -26,7 +26,7 @@ Everything you need is in this repo, including a free game to play.
 
 1. **Get it:** `git clone https://github.com/shouvik12/relit.git`, or click **Code → Download ZIP** and unzip it.
 2. **Open `relit.html`** with a double-click. It runs straight from your disk: no install, no server, no account.
-3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 8), **OpenArena: The Other Side**, **Wrecklight: car combat** (then a car) **Snow Mountain: frozen tunnel** or **Abuse (1995): Level 1**. Freedoom is built in, so there's no file to find.
+3. **Pick a mode and press _Play_.** Choose the **Freedoom campaign**, **Quake: Episode 1** (then a level, 1 to 8), **OpenArena: The Other Side**, **Wrecklight: car combat** (then a car), **Snow Mountain: frozen tunnel** or **Abuse (1995): Level 1**. Freedoom is built in, so there's no file to find.
 
 ```
 relit/
@@ -182,6 +182,34 @@ Works with Doom II-style files such as `freedoom2.wad` or `doom2.wad`.
 
 ---
 
+### Bonus level: Abuse (1995), Level 1
+
+![A corridor of Abuse's alien base, with its own wall art, in Relit](docs/abuse-level1.jpg)
+
+Level 1 of **Abuse**, Crack dot Com's 1995 side-scroller, turned into a first-person Doom level. Abuse's side view becomes a floor plan, so you walk the base's real corridors and rooms, and every wall wears the actual Abuse tile from that spot in the original. 73 monsters wait in the tunnels, facing the way you'll come in.
+
+**How to play:** open `relit.html`, click **Abuse (1995): Level 1** and press **Play**. It uses the built-in Freedoom. Find the exit switch at the far end of the base.
+
+How it was made:
+- Abuse's game data was released into the **public domain**. [`tools/abuse2doom`](tools/abuse2doom) reads level 1's tile grid and treats every tile with a collision outline as solid rock and the rest as open floor.
+- The wall tiles are extracted from Abuse's art files, converted to the Doom palette and stored in the map file. Abuse's music and sounds aren't included.
+
+---
+
+### Bonus level: Snow Mountain, frozen tunnel
+
+![Fighting through the frozen tunnel of Snow Mountain in Relit](docs/snow-mountain.jpg)
+
+**Snow Mountain**, a race track from the open-source kart racer SuperTuxKart, turned into a twisting frozen tunnel. About 620 m of road climbs through the mountain past corpses and blood on the snow, with 93 monsters that get tougher the deeper you go: zombies and imps first, barons near the end.
+
+**How to play:** open `relit.html`, click **Snow Mountain: frozen tunnel** and press **Play**. Hit the exit switch at the top of the climb.
+
+How it was made:
+- [`tools/stk2doom`](tools/stk2doom) reads the track's driveline, the chain of patches that marks the drivable road, and turns each patch into a Doom sector at its height, with steps kept low enough to walk.
+- The track's road crosses over itself later in the lap, which Doom can't stack, so the level uses the first 106 of its 168 patches. Only the road's shape is used; no SuperTuxKart art, sound or music is included.
+
+---
+
 ## How it works
 
 ```
@@ -230,6 +258,8 @@ Played your own `doom2.wad` with it? Found a room that looks incredible with the
 - **Stunt Rally 3 track "Dark" (`vlc1-dark`)** by Crystal Hammer and contributors, under the GPL v3; converted into `maps/wrecklight.wad`, which is GPL-3.0-or-later. The source is in `maps/src/vlc1-dark/`.
 - **Stunt Rally 3 cars** LK4 (clarabox, CryHam), XZ (Neubi) and OT (irokrhus), all CC0; converted into `maps/cars/`. See `licenses/stuntrally-cars.txt`.
 - **Quake E1M1–E1M4 map sources** by id Software, released by John Romero under the GPL (2006); converted into `maps/quake-e1.wad`. No Quake art or sound is included.
+- **SuperTuxKart track "Snow Mountain"** by Canis Lupus, converted to SuperTuxKart by sj04736, under the GPL and CC BY-SA; its road shape is converted into `maps/snowmountain.wad`. See `licenses/supertuxkart-snowmountain.txt`. No SuperTuxKart art or sound is included.
+- **Abuse** by Crack dot Com, whose data was released into the public domain; level 1's layout and wall tiles are converted into `maps/abuse.wad`. See `licenses/abuse.txt`. Abuse's music and sounds are not included.
 - **OPL music emulation** from DOSBox and Chocolate Doom (GPL-2.0-or-later).
 - **Three.js** (MIT), **earcut** (ISC), **browser_wasi_shim** (MIT/Apache-2.0) and the **Real-ESRGAN** `realesr-general-x4v3` model weights (BSD-3-Clause). See `licenses/`.
 - Relit is released under the **GPL-2.0-or-later** (see `LICENSE`).
