@@ -138,3 +138,21 @@ What changes from SuperTuxKart:
 Rebuild (needs `pip install numpy shapely` and SuperTuxKart's `tracks/snowmountain/quads.xml`):
     python3 tools/stk2doom/stk2doom.py path/to/snowmountain/quads.xml snow E1M1
     zdbsp -o maps/snowmountain.wad snow.raw.wad
+
+## abuse.wad: Abuse (1995), level 1
+
+- **Source:** **Abuse** by Crack dot Com, whose data was **released into the public domain**
+  (see `licenses/abuse.txt`). Used: the layout of `data/levels/level01.spe` and the wall tiles from
+  `data/art/fore/*.spe`. Abuse's music and sounds are not included.
+- **Converted by** `tools/abuse2doom/abuse2doom.py`. Abuse is a side-scroller, so its level is read
+  as a floor plan: tiles with a collision outline are solid, the rest is open floor, giving the
+  level's real corridors and rooms. Every wall wears the actual Abuse tile behind it (21 different
+  tiles, converted to the Doom palette and stored in the map with its own PNAMES/TEXTURE2), so it
+  needs the built-in Freedoom.
+- 73 Freedoom monsters face back along the route so they spot you coming; weapons, ammo, health,
+  Doom 1 gore and lamps fill the tunnels, and the exit switch sits at the far end.
+
+Rebuild (needs the Abuse data folder, freedoom1.wad and zdbsp):
+    python3 tools/abuse2doom/abuse2doom.py path/to/abuse/data path/to/abuse/data/levels/level01.spe abuse E1M1 game/freedoom1.wad
+    zdbsp -o maps/abuse.wad abuse.raw.wad
+    python3 tools/abuse2doom/abuse2doom.py --addtex maps/abuse.wad abuse.tex

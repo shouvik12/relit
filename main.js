@@ -35,6 +35,12 @@ async function freedoom2Bytes() {
   }
   throw new Error('Could not load the built-in Freedoom: Phase 2 (game/freedoom2.wad)');
 }
+async function abuseBytes() {
+  if (window.RELIT_ABUSE) return gunzip(b64(window.RELIT_ABUSE));
+  const r = await fetch('maps/abuse.wad');
+  if (r.ok) return new Uint8Array(await r.arrayBuffer());
+  throw new Error('Could not load the Abuse level (maps/abuse.wad)');
+}
 async function snowBytes() {
   if (window.RELIT_SNOW) return gunzip(b64(window.RELIT_SNOW));
   const r = await fetch('maps/snowmountain.wad');
@@ -207,6 +213,12 @@ async function start(name, wadBytes) {
       if (!hasLump(wadBytes, 'E1M1')) throw new Error('Snow Mountain needs a Doom 1-style file such as freedoom1.wad, not a Doom II one');
       $('loadmsg').textContent = 'Heading into the mountain…';
       wadBytes = appendPwad(wadBytes, await snowBytes());
+    }
+    if (level === 'abuse') {
+      // its walls are Abuse's own tiles, added on top of Freedoom's texture list, so it needs the built-in Freedoom
+      if (!hasLump(wadBytes, 'FREEDOOM') || !hasLump(wadBytes, 'E1M1')) throw new Error('the Abuse level adds its art on top of Freedoom, so play it with the built-in Freedoom (remove your own .wad)');
+      $('loadmsg').textContent = 'Dropping into the Abuse base…';
+      wadBytes = appendPwad(wadBytes, await abuseBytes());
     }
     if (level === 'wreck') {
       if (!hasLump(wadBytes, 'MAP01')) throw new Error('Wrecklight needs a Doom II-style file such as freedoom2.wad or doom2.wad, for its monsters');

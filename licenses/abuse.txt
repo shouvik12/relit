@@ -1,0 +1,9 @@
+Abuse level (maps/abuse.wad)
+
+Abuse (1995) by Crack dot Com. Per the COPYING file of the open-source Abuse project
+(e.g. github.com/Xenoveritas/abuse): "data/*: Copyright (c) 1995 Crack dot Com, Copyright (c)
+1996-2008 Justin Cassidy and others. These files were released in the public domain."
+
+Used in Relit: the level layout of data/levels/level01.spe and the foreground wall tiles from
+data/art/fore/*.spe (converted to the Doom palette). Abuse's music and sound effects, which are
+licensed separately, are not included.
